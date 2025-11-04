@@ -1,1 +1,0 @@
-#energy/README.md
