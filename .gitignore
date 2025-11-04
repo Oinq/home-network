@@ -1,0 +1,26 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*.bak
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs & cache
+*.log
+logs/
+cache/
+__pycache__/
+
+# Arquivos/exports ocasionais
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Imagens de apoio (mantém só as que quiseres)
+# !docs/images/            # <- descomenta se quiseres manter apenas docs/images
