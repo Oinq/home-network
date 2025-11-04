@@ -1,0 +1,136 @@
+server:
+  name: OinqServer
+  model: HP ProLiant MicroServer Gen8
+  location: rack doméstico (junto ao NAS e Netgear GS748T)
+  collected_at: "2025-11-04"
+
+  os:
+    distro: "Ubuntu 24.04.2 LTS (noble)"
+    kernel: "6.8.0-85-generic"
+    uptime_pretty: "up ~1 semana 6 dias"
+
+  cpu:
+    model: "Intel Xeon E3-1265L v2 @ 2.50GHz"
+    sockets: 1
+    cpus: 8          # lógicos (4C/8T)
+    threads_per_core: 2
+
+  ram:
+    total: "16 GiB"
+    dimms:
+      - size: "8 GB"
+        speed: "1333 MT/s"
+      - size: "8 GB"
+        speed: "1333 MT/s"
+
+  gpu:
+    model: "NVIDIA Quadro P400 (2GB)"
+    driver: "535.274.02"
+    cuda: "12.2"
+    nvenc:
+      av1: true
+      h264: true
+      hevc: true
+
+  storage:
+    system_disk:
+      device: "/dev/sde2"
+      fs: "ext4"
+      mountpoint: "/"
+      size: "59.6G"
+      used: "33G"
+    array:
+      md_device: "/dev/md127"
+      level: "raid5"
+      members: [sda, sdb, sdc, sdd]        # 4 × 2.7T
+      chunk: "512k"
+      size: "8.2T"
+      fs: "ext4"
+      mountpoint: "/mnt/raid"
+      used: "89G"
+    notes:
+      - "RAID5 ativo e saudável [UUUU]."
+      - "Instalar smartmontools p/ S.M.A.R.T.: sudo apt install smartmontools"
+
+  network:
+    lan_subnet: "192.168.1.0/24"
+    gateway: "192.168.1.1"
+    interfaces:
+      - name: "eno1"
+        ipv4: "192.168.1.5/24"
+        config: "DHCP (reservar no OPNsense recomendado)"
+      - name: "eno2"
+        ipv4: null
+        config: "por configurar"
+      - name: "tailscale0"
+        ipv4: "100.126.192.110/32"
+        role: "acesso remoto (Tailscale)"
+    docker_bridges:
+      - "docker0 172.17.0.1/16"
+      - "br-ae8cf8a84a43 172.19.0.1/16"
+      - "br-f3e758bab7ac 172.18.0.1/16"
+
+  services:
+    ssh: "active"
+    samba: "inactive"
+    nfs: "inactive"
+    listeners:
+      - { port: 22,    proto: tcp,  note: "SSH" }
+      - { port: 80,    proto: tcp,  note: "HTTP (reverse proxy/serviço web)" }
+      - { port: 443,   proto: tcp,  note: "HTTPS (reverse proxy/serviço web)" }
+      - { port: 53,    proto: tcp,  note: "DNS local (systemd-resolved)" }
+      - { port: 1883,  proto: tcp,  note: "MQTT" }
+      - { port: 8883,  proto: tcp,  note: "MQTTS" }
+      - { port: 2283,  proto: tcp,  note: "Immich server" }
+      - { port: 8007,  proto: tcp,  note: "serviço auxiliar (Immich ML/health?)" }
+      - { port: 8096,  proto: tcp,  note: "Jellyfin" }
+      - { port: 25565, proto: tcp,  note: "Minecraft" }
+      - { port: 3389,  proto: tcp,  note: "RDP/Guacd/xfreerdp? (confirmar origem)" }
+    todo:
+      - "Se for para partilhas: ativar Samba/NFS quando necessário."
+
+  containers:  # docker ps (resumo)
+    - name: "mc-server"
+      image: "itzg/minecraft-server:latest"
+      status: "Up (healthy)"
+      ports: [ "25565/tcp" ]
+    - name: "immich_server"
+      image: "ghcr.io/immich-app/immich-server:release"
+      status: "Up (healthy)"
+      ports: [ "2283/tcp" ]
+    - name: "immich_machine_learning"
+      image: "ghcr.io/immich-app/immich-machine-learning:release-cuda"
+      status: "Up (healthy)"
+      notes: ["usa GPU (CUDA)"]
+    - name: "immich_postgres"
+      image: "ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0"
+      status: "Up (healthy)"
+    - name: "immich_redis"
+      image: "valkey/valkey:8-bookworm"
+      status: "Up (healthy)"
+    - name: "jellyfin"
+      image: "lscr.io/linuxserver/jellyfin:latest"
+      status: "Up"
+      ports: [ "8096/tcp" ]
+      notes:
+        - "Configurar HW transcode (NVIDIA runtime, /dev/dri se aplicável)."
+    - name: "bumper"
+      image: "bmartin5692/bumper"
+      status: "Up"
+  plans:
+    to_install:
+      - "Prowlarr (indexers)"
+      - "Sonarr"
+      - "Radarr"
+      - "Bazarr"
+      - "Lingarr + LibreTranslate"
+      - "SABnzbd"
+    media_policy:
+      - "Biblioteca com rips próprios de Blu-ray"
+      - "Jellyfin com NVENC (h264/hevc/av1) quando necessário"
+    backups:
+      - "Destino para snapshots do Home Assistant"
+      - "Incluir /mnt/raid em rotação de backups"
+  notes:
+    - "iLO4 desativado."
+    - "Segunda NIC (eno2) reservada para futura configuração."
