@@ -168,3 +168,6 @@ server:
         - "docker exec -it jellyfin nvidia-smi"
         - "/usr/lib/jellyfin-ffmpeg/ffmpeg -hide_banner -encoders | grep -i nvenc (dentro do container)"
         - "ls -al /media (dentro do container) → movies/, tv/…"
+      nvenc: true
+      transcode_path: "/cache/transcodes"
+      validated_at: "2025-11-04T23:35"
