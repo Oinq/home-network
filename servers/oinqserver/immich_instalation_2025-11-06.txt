@@ -1,0 +1,161 @@
+# 🧱 Immich — Instalação e Diagnóstico (v1.137.1 → v2.2.x)
+
+## 🔹 Contexto
+
+**Host:** `oinqserver` (HP Microserver Gen8, Ubuntu 24.04.2 LTS)  
+**Stack:** Docker Compose  
+**Rede:** 192.168.1.x  
+**Storage:**
+- `/mnt/raid/containers/immich/upload` → volume local para cache / encoded-video / thumbs  
+- `/mnt/nas_media/media` → montado CIFS read-only em `/ext` (NAS principal)
+
+**Objetivo:** verificar integridade e espaço do sistema atual, e preparar atualização segura para Immich **v2.2.3**.
+
+---
+
+## 🔹 Diagnóstico inicial
+
+1. **Containers saudáveis:**
+   ```bash
+   docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep immich
+   ```
+   Resultado:
+   ```
+   immich_server             Up (healthy)
+   immich_machine_learning   Up (healthy)
+   immich_postgres           Up (healthy)
+   immich_redis              Up (healthy)
+   ```
+
+2. **Verificação de montagens internas:**
+   ```bash
+   docker exec -it immich_server bash -lc '
+   echo "-- /data"; ls -al /data
+   echo "-- /ext mount"; mount | grep " on /ext "
+   '
+   ```
+   ✅ `/data` contém subdiretórios `upload`, `encoded-video`, `library`, `thumbs`, `backups`, `profile`  
+   ✅ `.immich` markers criados em cada pasta  
+   ✅ `/ext` montado via CIFS (NAS RO) → `/data/encoded-video` é local, não NAS.
+
+3. **Espaço reportado no dashboard:**
+   ```
+   Utilizado 105 GiB de 8.1 TiB
+   ```
+   ➜ refere-se ao **disco local (upload)**, não ao NAS.
+
+---
+
+## 🔹 Testes de conteúdo
+
+1. **Mapeamentos verificados:**
+   ```bash
+   docker inspect immich_server --format '{{json .Mounts}}' | jq .
+   ```
+   ```
+   /mnt/raid/containers/immich/upload → /data
+   /mnt/nas_media/media → /ext (ro)
+   ```
+
+2. **Conteúdo acessível:**
+   ```bash
+   docker exec -it immich_server bash -lc '
+   ls -al /ext/photos | head
+   find /ext/photos -maxdepth 3 -type d | head -n 100
+   find /ext/videoteca -maxdepth 3 -type f | head -n 20
+   '
+   ```
+   ➜ Confirmado acesso aos ficheiros e diretórios esperados (ex: `photos/`, `videoteca/`).
+
+---
+
+## 🔹 Base de dados e serviços
+
+Verificações cruzadas:
+```bash
+# Postgres
+docker run --rm --network immich_default --env-file /mnt/raid/immich/config/.env \
+  ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0 \
+  bash -lc 'pg_isready -h immich_postgres -U "$DB_USERNAME" -d "$DB_DATABASE_NAME"'
+
+# Redis/Valkey
+docker run --rm --network immich_default valkey/valkey:8-bookworm \
+  bash -lc 'redis-cli -h immich_redis ping'
+```
+Resultados:  
+✅ Postgres OK  
+✅ Redis respondeu `PONG`
+
+---
+
+## 🔹 Preparação para atualização
+
+**Versão atual:**
+```bash
+grep ^IMMICH_VERSION /mnt/raid/immich/config/.env
+→ IMMICH_VERSION=release
+```
+
+**Última release estável:** `v2.2.3` (Nov 2025)  
+Comparação de commits mostra grandes mudanças estruturais e UI overhaul.
+
+---
+
+## 🔹 Plano de atualização seguro
+
+1. **Backup completo**
+   ```bash
+   mkdir -p /mnt/raid/immich/backups/$(date +%F)
+   docker compose -f /mnt/raid/immich/config/docker-compose.yml down
+   docker cp immich_postgres:/var/lib/postgresql/data /mnt/raid/immich/backups/$(date +%F)/postgres_data
+   cp -a /mnt/raid/immich/config /mnt/raid/immich/backups/$(date +%F)/config
+   cp -a /mnt/raid/containers/immich/upload /mnt/raid/immich/backups/$(date +%F)/upload_meta
+   ```
+
+2. **Fixar versão v2.2.3**
+   ```bash
+   sed -i 's/^IMMICH_VERSION=.*/IMMICH_VERSION=v2.2.3/' /mnt/raid/immich/config/.env
+   ```
+
+3. **Atualizar containers**
+   ```bash
+   docker compose -f /mnt/raid/immich/config/docker-compose.yml pull
+   docker compose -f /mnt/raid/immich/config/docker-compose.yml up -d
+   ```
+
+4. **Verificar migração de base de dados**
+   ```bash
+   docker logs -f immich_server | grep -i migration
+   ```
+
+5. **Confirmar no UI**
+   - Dashboard → canto inferior direito → `v2.2.3`
+   - Admin → Database Schema → “Up to date”
+
+---
+
+## 🔹 Notas importantes
+
+- A v2.x introduz novo motor de sincronização, OCR, permissões refinadas e nova interface.  
+- As bibliotecas em `/ext` continuam montadas **read-only** (NAS externo).  
+- O contador “Espaço de armazenamento” mostra apenas o **UPLOAD_LOCATION** (disco local).  
+- Após atualizar, Immich gera novos `.immich` markers e refaz thumbnails automaticamente.  
+- Reversão para 1.137.1 só é possível com backup da base de dados feito antes da migração.
+
+---
+
+## 🔹 Próximos passos
+
+- Confirmar espaço real do NAS:
+  ```bash
+  df -h /mnt/nas_media
+  docker exec -it immich_server bash -lc 'df -h /ext'
+  ```
+- Rever estratégia de backup automático (`pg_dump` + `rsync` diário).
+- Preparar migração controlada para v2.2.3 após verificação do armazenamento.
+
+---
+
+**Última atualização:** 2025-11-06  
+**Autor:** Nuno (OinqServer)  
+**Stack base:** [immich-app/immich](https://github.com/immich-app/immich)
