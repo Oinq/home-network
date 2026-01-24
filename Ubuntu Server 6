@@ -43,3 +43,11 @@ The service is enabled at boot and verified operational after restart.
 
 This establishes a functional monitoring baseline for the server,
 ready for future expansion (alerts, dashboards, Prometheus/Grafana, filtering).
+
+Minecraft server successfully migrated to the new host (erebor) using Docker.
+Data was transferred via rsync into the new persistent directory under /srv/docker-data/minecraft.
+Docker Engine and Docker Compose (plugin) were installed from the official Docker repository.
+A fresh docker-compose.yml was created and the container (itzg/minecraft-server) started cleanly.
+The container was validated through logs and health checks, and confirmed to restart correctly after reconnecting SSH.
+This confirms that Docker, persistence, and service reliability are working correctly on the new system, independent of the RAID subsystem.
+
