@@ -32,3 +32,14 @@ Hardware validated (CPU, RAM, storage, sensors) with no kernel or hardware error
 Basic local monitoring configured using Glances.
 
 The system is now stable and ready for the next phase: installing the SAS HBA and adding the 12-disk storage subsystem.
+
+Glances monitoring was configured as a persistent systemd service,
+bound to 0.0.0.0 and exposed to the local network.
+
+The Home Assistant Glances integration was successfully connected
+and is now ingesting live system metrics (CPU, memory, disks, temperatures, network, uptime, etc.).
+
+The service is enabled at boot and verified operational after restart.
+
+This establishes a functional monitoring baseline for the server,
+ready for future expansion (alerts, dashboards, Prometheus/Grafana, filtering).
