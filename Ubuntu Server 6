@@ -1,0 +1,15 @@
+Home server in early setup stage, installed with Ubuntu Server on dedicated hardware with a 500 GB SSD.
+
+The system uses UEFI with separate `/boot` and `/boot/efi` partitions, and LVM to allow flexible storage management.
+
+Base hardware:
+MSI Z97-G45 Gaming motherboard
+Intel i7-4790K CPU
+24 GB RAM
+EVGA RTX 3070 FTW3
+LSI 9207-8i PCIe card
+12 bay, 3.5" HDD chassis
+
+The root partition (`/`) is 100 GB, and the remaining **362 GB** is reserved for future data volumes and services (e.g. Docker, storage, VMs).
+
+This repository documents the configuration process, technical decisions, and ongoing evolution of the server.
