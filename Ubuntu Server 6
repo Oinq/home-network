@@ -51,3 +51,16 @@ A fresh docker-compose.yml was created and the container (itzg/minecraft-server)
 The container was validated through logs and health checks, and confirmed to restart correctly after reconnecting SSH.
 This confirms that Docker, persistence, and service reliability are working correctly on the new system, independent of the RAID subsystem.
 
+Minecraft server successfully migrated and validated after a full system reboot.
+A real client successfully joined the world, confirming correct container startup, port exposure (25565), data persistence, and overall service stability.
+
+Current setup is temporary:
+The Minecraft data is currently stored at:
+
+/srv/docker-data/minecraft/
+
+This path is intentionally located on local system storage to allow early validation of the new server.
+Once the RAID array is installed and mounted, this directory will be migrated to RAID-backed storage (e.g. under /mnt/raid/...) and the Docker bind mount paths will be updated accordingly.
+
+This validates the migration method and confirms the new server is ready to progressively replace the old one.
+
