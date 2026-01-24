@@ -1,15 +1,34 @@
-Home server in early setup stage, installed with Ubuntu Server on dedicated hardware with a 500 GB SSD.
+Initial system setup completed. Ubuntu Server 24.04.3 LTS installed and fully updated, using UEFI boot with separate `/boot` and `/boot/efi` partitions and an LVM layout (100 GB root, ~362 GB free for future volumes).
 
-The system uses UEFI with separate `/boot` and `/boot/efi` partitions, and LVM to allow flexible storage management.
+Hostname set to **erebor**.
 
-Base hardware:
-MSI Z97-G45 Gaming motherboard
-Intel i7-4790K CPU
-24 GB RAM
-EVGA RTX 3070 FTW3
-LSI 9207-8i PCIe card
-12 bay, 3.5" HDD chassis
+Automatic security updates enabled via `unattended-upgrades`.
 
-The root partition (`/`) is 100 GB, and the remaining **362 GB** is reserved for future data volumes and services (e.g. Docker, storage, VMs).
+Base administration tools installed and verified: htop, lm-sensors, smartmontools, nvme-cli, iotop, iftop, ncdu, curl, wget, git, unzip.
 
-This repository documents the configuration process, technical decisions, and ongoing evolution of the server.
+Hardware validated (CPU, RAM, storage, sensors) with no kernel or hardware errors detected.
+
+Basic local monitoring configured using Glances.
+
+The system is now stable and ready for the next phase: installing the SAS HBA and adding the 12-disk storage subsystem.
+
+---
+
+Se quiseres, também posso formatar isto como `README.md` mais estruturado (com títulos, secções, etc.).
+Tens razão — aquilo ficou tudo “colado”. Aqui vai com **quebras de linha próprias para GitHub (Markdown)**:
+
+---
+
+Initial system setup completed. Ubuntu Server 24.04.3 LTS installed and fully updated, using UEFI boot with separate `/boot` and `/boot/efi` partitions and an LVM layout (100 GB root, ~362 GB free for future volumes).
+
+Hostname set to **erebor**.
+
+Automatic security updates enabled via `unattended-upgrades`.
+
+Base administration tools installed and verified: htop, lm-sensors, smartmontools, nvme-cli, iotop, iftop, ncdu, curl, wget, git, unzip.
+
+Hardware validated (CPU, RAM, storage, sensors) with no kernel or hardware errors detected.
+
+Basic local monitoring configured using Glances.
+
+The system is now stable and ready for the next phase: installing the SAS HBA and adding the 12-disk storage subsystem.
