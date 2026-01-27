@@ -308,7 +308,7 @@ IPs críticos:
 | OPNSense       | 192.168.1.1  |
 | Home Assistant | 192.168.1.2  |
 | NAS            | 192.168.1.3  |
-| Erebor         | reservado    |
+| Erebor         | 192.168.1.6  |
 | Cerbo GX       | 192.168.1.13 |
 | NVR            | 192.168.1.51 |
 | Switch GS748T  | 192.168.1.81 |
