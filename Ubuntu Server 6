@@ -64,3 +64,8 @@ Once the RAID array is installed and mounted, this directory will be migrated to
 
 This validates the migration method and confirms the new server is ready to progressively replace the old one.
 
+Tailscale has been successfully configured on the Erebor server as a tailnet node with subnet routing enabled.
+Erebor authenticates correctly, advertises the 192.168.1.0/24 route, and accepts routes from other peers.
+Connectivity was validated from a remote node (Windows), confirming access both to Erebor’s Tailscale IP and to devices within the local LAN.
+Remote access to the internal network is fully functional and stable.
+
