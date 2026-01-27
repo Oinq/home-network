@@ -69,3 +69,20 @@ Erebor authenticates correctly, advertises the 192.168.1.0/24 route, and accepts
 Connectivity was validated from a remote node (Windows), confirming access both to Erebor’s Tailscale IP and to devices within the local LAN.
 Remote access to the internal network is fully functional and stable.
 
+Storage architecture was designed around real workload needs rather than theoretical edge cases.
+
+The NVR uses JBOD (2TB + 2TB + 1TB), intentionally accepting data loss for camera recordings.
+
+The NAS (Synology DS920+) uses 4 × 4TB in SHR (~12TB usable) and is positioned as secondary storage and backup, not as the primary source of truth.
+The Erebor server concentrates the important data and performance-sensitive workloads.
+
+On Erebor, the system and Docker engine run on a 500GB SSD, while Docker data is isolated on a dedicated 250GB SSD to keep write churn away from HDDs. 
+A second 250GB SSD remains intentionally unassigned, reserved for future needs instead of being forced into an artificial role. 
+A 320GB disk is used as scratch space for downloads, unpacking and temporary data.
+Critical data is stored on a ZFS mirror (18TB + 18TB), ensuring redundancy where it actually matters.
+Non-critical data on Erebor is stored on two independent 4TB disks (no pool, no JBOD, no RAID).
+This is a deliberate choice: each disk stands alone, so the failure of one drive only affects the data stored on that specific disk, instead of causing total loss across a combined volume.
+This approach favors fault isolation over capacity aggregation for data that is recoverable but still inconvenient to lose.
+
+This layout intentionally leaves 5 of 12 bays free, preserving flexibility for future expansion instead of locking the system into premature pool designs.
+
