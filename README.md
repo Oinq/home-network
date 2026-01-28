@@ -1,6 +1,16 @@
 Erebor Homelab — Single Source of TruthRegra principal: este ficheiro é a fonte única de verdade. Se não está aqui, oficialmente não existe.
 Este documento substitui documentação antiga (oinqserver) e passa a ser a referência única e atual para o servidor erebor.
 Objetivo: evitar informação dispersa, manter tudo coerente e permitir que qualquer mudança futura seja refletida aqui primeiro.
+Resumo rápidoSistema: Ubuntu Server 24.04.3 LTS com boot UEFI e LVM.
+Dados críticos: ZFS mirror 18TB + 18TB montado em /mnt/critical (estado saudável).
+Storage auxiliar ativo:
+/srv/docker-data (SSD 250GB) para dados do Docker
+/mnt/media/movies (HDD 4TB)
+/mnt/media/tv (HDD 4TB)
+/srv/data/scratch (HDD 320GB)
+Rede: gateway OPNSense 192.168.1.1, Erebor em 192.168.1.6.
+Serviços ativos: Docker, Minecraft, Glances, Tailscale.
+Regra de ouro: se não está neste ficheiro, oficialmente não existe.
 Índice1) Visão geral
 2) Hardware atual
 3) Princípios de arquitetura
