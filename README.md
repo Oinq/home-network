@@ -1,22 +1,22 @@
 Erebor Homelab — Single Source of TruthRegra principal: este ficheiro é a fonte única de verdade. Se não está aqui, oficialmente não existe.
 Este documento substitui documentação antiga (oinqserver) e passa a ser a referência única e atual para o servidor erebor.
 Objetivo: evitar informação dispersa, manter tudo coerente e permitir que qualquer mudança futura seja refletida aqui primeiro.
-ÍndiceVisão geral
-Hardware atual
-Princípios de arquitetura
-Layout lógico de paths
-Docker (regras e contrato técnico)
-Serviços atualmente ativos
-Estrutura planeada (media stack)
-Backups
-Regra operacional
-Rede
-OPNSense, DNS e AdGuard
-Home Assistant
-Victron & MQTT Integration
-Regra estrutural de documentação
-Storage real e estado atual
-Storage não-ZFS (discos auxiliares)
+Índice1) Visão geral
+2) Hardware atual
+3) Princípios de arquitetura
+4) Layout lógico de paths
+5) Docker
+6) Serviços atualmente ativos
+7) Estrutura planeada (media stack)
+8) Backups
+9) Regra operacional
+10) Rede
+11) OPNSense, DNS e AdGuard
+12) Home Assistant
+13) Victron & MQTT Integration
+14) Regra estrutural de documentação
+15) Storage real e estado atual (ZFS)
+16) Storage não-ZFS (discos auxiliares)
 1) Visão geralItemValorHostnameereborOSUbuntu Server 24.04.3 LTSBootUEFI com /boot e /boot/efi separadosLVM100 GB root, ~362 GB livreUpdatesunattended-upgrades ativoEstadoSistema estável, Docker validado, pronto para expansão2) Hardware atual (fonte de verdade)Qualquer alteração física de discos deve ser refletida aqui.
 DiscoFunçãoSSD 500 GB (Samsung 860)Sistema operativo (LVM + /boot + EFI)SSD 250 GB (Samsung 750)Docker internals (/srv/docker-data)SSD 250 GB (Samsung 850)Livre / reservadoHDD 320 GB (WD)Scratch (/srv/data/scratch)HDD 4 TB (WD)Media – Filmes (/mnt/media/movies)HDD 4 TB (WD)Media – Séries (/mnt/media/tv)ZFS mirror 18 + 18 TBDados críticos (/mnt/critical)Bays livres5 / 12Nota: O ZFS mirror encontra-se operacional e validado (ver secção 15).
 3) Princípios de arquiteturaRedundância onde importa (ZFS mirror para dados críticos)
