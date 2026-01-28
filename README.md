@@ -1,6 +1,3 @@
-Skip to content
-
-You said:
 # Erebor Homelab — Single Source of Truth
 
 > **Regra principal:** este ficheiro é a fonte única de verdade. Se não está aqui, oficialmente não existe.
