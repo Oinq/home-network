@@ -2,7 +2,7 @@
 
 > **Regra principal:** este ficheiro é a fonte única de verdade. Se não está aqui, oficialmente não existe.
 
-Este documento substitui documentação antiga (oinqserver) e passa a ser a referência única e atual para o servidor **erebor**.
+Este documento substitui documentação antiga e passa a ser a referência única e atual para o servidor **erebor**.
 Objetivo: evitar informação dispersa, manter tudo coerente e permitir que qualquer mudança futura seja refletida aqui primeiro.
 
 ---
