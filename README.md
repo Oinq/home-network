@@ -54,6 +54,8 @@ Objetivo: evitar informação dispersa, manter tudo coerente e permitir que qual
 | ZFS mirror 18 + 18 TB | Dados críticos                            |
 | Bays livres           | 5 / 12                                    |
 
+Nota: O ZFS mirror encontra-se operacional e validado (ver secção 15).
+
 ---
 
 ## 3) Princípios de arquitetura
@@ -470,5 +472,94 @@ Sistema considerado **infraestrutura crítica da casa**.
 * Docs antigos passam a ser material histórico
 * Qualquer alteração real deve ser refletida aqui no mesmo dia
 * Se documento e realidade divergirem, o documento está errado
+
+---
+
+## 15) Storage real e estado atual (fonte de verdade)
+
+### Pool ZFS de dados críticos
+
+Pool ativo:
+
+* Nome: `critical`
+* Tipo: mirror
+* Discos:
+  * WDC WD180EDGZ (18 TB)
+  * WDC WD180EDGZ (18 TB)
+* Identificação via: `/dev/disk/by-id`
+* Mountpoint: `/mnt/critical`
+* Estado: ONLINE, 0 erros (`zpool status` limpo)
+
+Propriedades ativas no pool:
+
+* ashift=12
+* compression=lz4
+* atime=off
+* autotrim=on
+* ACL e xattrs ativos
+
+O pool foi validado após:
+* limpeza destrutiva dos discos (mdadm, sgdisk, wipefs)
+* criação nova do mirror
+* mudança física de cabos SATA → backplane  
+Sem necessidade de reimportação e sem degradação.
+
+Conclusão: configuração robusta e independente da ordem das portas.
+
+---
+
+### Integridade dos dados migrados
+
+Dados já migrados para ZFS:
+
+* Fotos de família (~963 GB)
+
+Cópia realizada com `rsync` e verificada com execução incremental posterior:
+
+Resultado confirmado:
+* 69 995 ficheiros
+* ~963 GB
+* 0 diferenças
+* Estrutura, timestamps e tamanhos coerentes
+
+Os dados em `/mnt/critical` são considerados consistentes.
+
+---
+
+### Estado SMART dos discos validados
+
+Discos atualmente considerados saudáveis:
+
+* SSD Samsung 750 EVO 250 GB
+* SSD Samsung 850 EVO 250 GB
+* HDD WD 320 GB (uso leve apenas)
+* HDD WD 2 TB (backup / dados não críticos, ~59k horas, SMART limpo)
+* Dois discos 18 TB do pool ZFS
+
+Nenhum disco apresenta:
+* sectores realocados
+* sectores pendentes
+* sectores incorrigíveis
+
+---
+
+### Situação atual do sistema de storage
+
+Estado factual:
+
+* ZFS mirror funcional
+* Backplane e HBA LSI SAS2308 funcionais
+* Discos corretamente detetados
+* Dados críticos já protegidos em ZFS
+* Base estável para criação dos datasets finais
+
+Próximos passos técnicos (ainda não implementados):
+
+* Criação de datasets finais:
+  * `critical/photos`
+  * `critical/documents`
+  * `critical/configs`
+* Integração correta com Immich sem permitir alterações destrutivas
+* Implementação da rotina automática de backup
 
 Objetivo: nunca mais existir a situação de "tenho outro ficheiro algures com informação diferente".
