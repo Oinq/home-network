@@ -502,58 +502,20 @@ Resultado:
 
 ---
 
-## 12) Home Assistant — Energia (Utility Meters)
+## 12) Home Assistant
 
-### Estado atual (fonte de verdade)
+| Item          | Valor                            |
+| ------------- | -------------------------------- |
+| Plataforma    | Home Assistant OS                |
+| IP            | 192.168.1.2                      |
+| Acesso remoto | Tailscale                        |
+| Função        | Controlador central de automação |
 
-Toda a medição e agregação de energia foi **consolidada em YAML**. O Home Assistant deixou de usar Utility Meters criados via UI (Helpers). Estes foram removidos após validação de continuidade de dados.
+Escopo:
 
-Princípios aplicados:
-
-* Single source of truth em YAML
-* Nenhum Utility Meter crítico é criado via UI
-* `entity_id` mantidos para preservar estatísticas históricas
-* Sensores de energia usam sempre `device_class: energy` e `state_class` compatível
-
-### Sensores fonte (contadores acumulados)
-
-* `sensor.grid_energy_consumed_total`
-* `sensor.grid_energy_exported_total`
-* `sensor.victron_pv_energy`
-* `sensor.victron_battery_energy`
-* `sensor.victron_ac_loads_energy`
-* `sensor.battery_charging_energy`
-* `sensor.battery_discharging_energy`
-* `sensor.gas_consumed_belgium`
-
-### Utility meters ativos (YAML)
-
-Definidos em:
-
-```
-/homeassistant/packages/active/energy_meters.yaml
-```
-
-Cobertura:
-
-* Rede (import/export, tarifas)
-* Solar (PV)
-* Bateria (total, charge, discharge)
-* AC loads
-* EV charger
-* Gás (m³ e kWh)
-
-Todos com ciclos `daily / monthly / yearly`.
-
-### Histórico
-
-Os meters YAML herdaram corretamente os **statistics existentes** (visível como *5-minute aggregated*). Não houve perda de dados históricos relevantes.
-
-### Regra operacional (energia)
-
-* Nunca criar Utility Meters via UI
-* Qualquer novo meter deve ser adicionado em `energy_meters.yaml`
-* Antes de apagar entidades de energia: confirmar `entity_id` e `state_class`
+* Plataforma HA
+* Integrações genéricas (Glances, notificações, dashboards)
+* Estrutura base (não específica de sistemas externos)
 
 ---
 
@@ -566,6 +528,8 @@ Os meters YAML herdaram corretamente os **statistics existentes** (visível como
 * Sensores definidos via packages YAML
 * Integração totalmente local (sem cloud)
 
+---
+
 ### Arquitetura operacional
 
 O Cerbo publica tópicos no formato:
@@ -576,12 +540,18 @@ Exemplo real:
 
 * `N/<serial>/battery/0/Soc`
 
-Comunicação bidirecional:
+O Home Assistant consome diretamente estes tópicos.
+
+A comunicação é bidirecional:
 
 * Leitura: `N/<serial>/#`
 * Escrita: `R/<serial>/#`
 
+---
+
 ### Como adicionar um sensor novo
+
+Modelo base:
 
 ```yaml
 sensor:
@@ -593,19 +563,64 @@ sensor:
     state_class: measurement
 ```
 
-Regras:
+Regras obrigatórias:
 
 * Não duplicar sensores para o mesmo tópico
 * Manter nomenclatura consistente
 * Cada sensor novo deve ser documentado aqui
 
+---
+
 ### Localização real da bridge Mosquitto
+
+A bridge vive no add-on oficial **Mosquitto broker** do HA.
+
+Caminho real do ficheiro:
 
 ```
 \\192.168.1.2\share\mosquitto\mosquitto.conf
 ```
 
-Procedimento se o Cerbo mudar de IP documentado.
+Alterações neste ficheiro sobrevivem a reboots e updates do add-on.
+
+---
+
+### Procedimento se o Cerbo mudar de IP
+
+1. Descobrir novo IP no OPNSense (DHCP leases)
+
+2. Abrir o ficheiro:
+
+   ```
+   \\\\192.168.1.2\\share\\mosquitto\\mosquitto.conf
+   ```
+
+3. Alterar a linha `address x.x.x.x`
+
+4. Guardar o ficheiro
+
+5. Reiniciar o add-on Mosquitto no HA
+
+Resultado esperado:
+
+* Bridge reconecta
+* Tópicos reaparecem
+* Sensores retomam automaticamente
+
+> Nota: o Cerbo deve ter sempre reserva DHCP. Este procedimento é apenas recuperação de falha.
+
+---
+
+### Capacidade energética (contexto)
+
+| Elemento   | Valor                    |
+| ---------- | ------------------------ |
+| Inversores | 3 × MultiPlus 48/5000-70 |
+| MPPT       | 450/200                  |
+| Baterias   | 4 × 5 kWh                |
+| Autonomia  | ~8 meses off-grid        |
+
+Sistema considerado **infraestrutura crítica da casa**.
 
 ---
 
@@ -622,62 +637,139 @@ Procedimento se o Cerbo mudar de IP documentado.
 
 ### Pool ZFS de dados críticos
 
-* Pool: `critical`
+Pool ativo:
+
+* Nome: `critical`
 * Tipo: mirror
-* Discos: 2 × 18 TB (WD)
+* Discos:
+
+  * WDC WD180EDGZ (18 TB)
+  * WDC WD180EDGZ (18 TB)
+* Identificação via: `/dev/disk/by-id`
 * Mountpoint: `/mnt/critical`
-* Estado: ONLINE, 0 erros
+* Estado: ONLINE, 0 erros (`zpool status` limpo)
 
-### Datasets
+Propriedades ativas no pool:
 
-| Dataset            | Mountpoint              | Função        | recordsize |
-| ------------------ | ----------------------- | ------------- | ---------- |
-| critical/photos    | /mnt/critical/photos    | Fotos/vídeos  | 1M         |
-| critical/documents | /mnt/critical/documents | Documentos    | 128K       |
-| critical/configs   | /mnt/critical/configs   | Configurações | 16K        |
-| critical/backups   | /mnt/critical/backups   | Backups       | 1M         |
+* ashift=12
+* compression=lz4
+* atime=off
+* autotrim=on
+* ACL e xattrs ativos
 
-Integridade validada.
+### Datasets existentes
+
+| Dataset            | Mountpoint                | Função        | recordsize |
+| ------------------ | ------------------------- | ------------- | ---------- |
+| critical/photos    | `/mnt/critical/photos`    | Fotos/vídeos  | 1M         |
+| critical/documents | `/mnt/critical/documents` | Documentos    | 128K       |
+| critical/configs   | `/mnt/critical/configs`   | Configurações | 16K        |
+| critical/backups   | `/mnt/critical/backups`   | Backups       | 1M         |
+
+### Integridade dos dados migrados
+
+Dados migrados e verificados para ZFS:
+
+* Fotos de família (~963 GB)
+* Verificação via `rsync --dry-run --delete` sem diferenças
+
+Conclusão: dados consistentes.
+
+### Estado SMART dos discos validados
+
+Nenhum disco apresenta sectores realocados, pendentes ou incorrigíveis.
 
 ---
 
 ## 16) Storage não-ZFS (discos auxiliares)
 
-### Filesystems
+### Filesystems criados
 
-| Disco | Label       | FS   | Função           | Mountpoint        |
-| ----- | ----------- | ---- | ---------------- | ----------------- |
-| sda   | docker-data | ext4 | Docker data-root | /srv/docker-data  |
-| sde   | movies      | ext4 | Media (filmes)   | /mnt/media/movies |
-| sdf   | tv          | ext4 | Media (séries)   | /mnt/media/tv     |
-| sdg   | scratch     | ext4 | Temporários      | /srv/data/scratch |
+| Disco | Label       | FS   | Função           | Mountpoint          |
+| ----- | ----------- | ---- | ---------------- | ------------------- |
+| sda   | docker-data | ext4 | Docker data-root | `/srv/docker-data`  |
+| sdd   | —           | —    | Reservado        | —                   |
+| sde   | movies      | ext4 | Media (filmes)   | `/mnt/media/movies` |
+| sdf   | tv          | ext4 | Media (séries)   | `/mnt/media/tv`     |
+| sdg   | scratch     | ext4 | Temporários      | `/srv/data/scratch` |
 
-### fstab
+### Montagem persistente (`/etc/fstab`)
 
 ```
-LABEL=docker-data  /srv/docker-data  ext4  defaults,noatime  0 2
-LABEL=movies       /mnt/media/movies ext4  defaults,noatime  0 2
-LABEL=tv           /mnt/media/tv     ext4  defaults,noatime  0 2
-LABEL=scratch      /srv/data/scratch ext4  defaults,noatime  0 2
+LABEL=docker-data  /srv/docker-data      ext4  defaults,noatime  0 2
+LABEL=movies       /mnt/media/movies     ext4  defaults,noatime  0 2
+LABEL=tv           /mnt/media/tv         ext4  defaults,noatime  0 2
+LABEL=scratch      /srv/data/scratch     ext4  defaults,noatime  0 2
 ```
+
+Conclusão: camada de storage auxiliar concluída e estável.
 
 ---
 
 ## 17) Política de snapshots ZFS (implementada)
 
-### Política
+### Objetivo
+
+Proteger dados críticos contra apagamentos acidentais, corrupção lógica e erro humano, com retenção previsível e mecanismo totalmente auditável.
+
+### Implementação técnica real
+
+* Mecanismo próprio baseado em script + systemd timers (não dependente de pacotes externos instáveis).
+* Script de gestão de snapshots:
+
+```
+/usr/local/sbin/zfs-snapshot.sh
+```
+
+Datasets protegidos pelo mecanismo:
+
+* `critical/photos`
+* `critical/documents`
+* `critical/configs`
+
+Dataset excluído explicitamente:
+
+* `critical/backups`
+
+### Política de retenção ativa
 
 | Tipo    | Frequência | Retenção |
 | ------- | ---------- | -------- |
-| hourly  | 1h         | 24       |
-| daily   | 1d         | 14       |
-| weekly  | 1w         | 8        |
-| monthly | 1m         | 6        |
+| hourly  | 1 hora     | 24       |
+| daily   | 1 dia      | 14       |
+| weekly  | 1 semana   | 8        |
+| monthly | 1 mês      | 6        |
 
-Timers systemd ativos e validados.
+### Integração com systemd
+
+Timers ativos:
+
+* `zfs-snapshot-hourly.timer`
+* `zfs-snapshot-daily.timer`
+* `zfs-snapshot-weekly.timer`
+* `zfs-snapshot-monthly.timer`
+
+Cada timer executa o script com os parâmetros apropriados de retenção.
+
+### Validação
+
+* Execução manual confirmada com criação real de snapshots
+* `systemctl list-timers` confirma timers ativos
+* `zfs list -t snapshot` mostra snapshots coerentes por dataset
+
+Conclusão: camada de snapshots funcional, previsível e sob controlo direto.
 
 ---
 
 ## Nota final
 
-Este documento reflete o estado **real e operacional** do servidor Erebor após a consolidação completa da camada de energia e da infraestrutura descrita acima.
+Este documento reflete o estado **real e operacional** do servidor Erebor após:
+
+* Limpeza controlada dos discos
+* Reestruturação completa do layout de storage
+* Implementação de datasets ZFS
+* Afinação de propriedades por tipo de dado
+* Implementação de snapshots automáticos com retenção definida
+* Implementação de mounts persistentes alinhados com a arquitetura
+
+A partir daqui, qualquer evolução (Docker, serviços, automações, backups, etc.) deve ser documentada aqui primeiro.
