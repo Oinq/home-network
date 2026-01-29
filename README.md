@@ -17,7 +17,7 @@ Este documento substitui documentação antiga (oinqserver) e passa a ser a refe
   * `/mnt/media/tv` (HDD 4TB)
   * `/srv/data/scratch` (HDD 320GB)
 * **Rede**: gateway OPNSense `192.168.1.1`, Erebor em `192.168.1.6`.
-* **Serviços ativos**: Docker, Minecraft, Glances, Tailscale.
+* **Serviços ativos**: Docker, Minecraft, Glances, Tailscale, SABnzbd, Prowlarr.
 * **Regra de ouro**: se não está neste ficheiro, oficialmente não existe.
 
 ---
@@ -30,7 +30,7 @@ Este documento substitui documentação antiga (oinqserver) e passa a ser a refe
 * [4) Layout lógico de paths](#4-layout-lógico-de-paths-abstração-estável)
 * [5) Docker](#5-docker)
 * [6) Serviços atualmente ativos](#6-serviços-atualmente-ativos)
-* [7) Estrutura planeada (media stack)](#7-estrutura-planeada-para-media-stack-exemplo-futuro)
+* [7) Estrutura planeada (media stack e Immich)](#7-estrutura-planeada-media-stack-e-immich)
 * [8) Backups](#8-backups-estratégia-real-e-operacional)
 * [9) Regra operacional](#9-regra-operacional)
 * [10) Rede](#10-rede-fonte-de-verdade)
@@ -40,6 +40,7 @@ Este documento substitui documentação antiga (oinqserver) e passa a ser a refe
 * [14) Regra estrutural de documentação](#14-regra-estrutural-de-documentação)
 * [15) Storage real e estado atual (ZFS)](#15-storage-real-e-estado-atual-zfs--fonte-de-verdade)
 * [16) Storage não-ZFS (discos auxiliares)](#16-storage-não-zfs-discos-auxiliares)
+* [17) Política de snapshots ZFS (implementada)](#17-política-de-snapshots-zfs-implementada)
 
 ---
 
@@ -92,7 +93,7 @@ O container pode morrer. Os dados persistentes sobrevivem sempre fora do Docker.
 **Bind mounts sempre explícitos**
 Nada de volumes anónimos difíceis de rastrear. Paths claros e legíveis.
 
-**Nada crítico em **``
+**Nada crítico em `/var/lib/docker`**
 O Docker pode ser apagado e reconstruído sem perda de dados importantes.
 
 ---
@@ -120,11 +121,8 @@ Se um mount mudar de disco, este documento deve ser atualizado.
 ### Estado atual
 
 * Docker Engine instalado via repositório oficial
-
 * Docker Compose (plugin) funcional
-
 * Restart policy padrão: `unless-stopped`
-
 * **Docker data-root configurado em** `/srv/docker-data` (migrado de `/var/lib/docker`)
 
 ---
@@ -132,11 +130,8 @@ Se um mount mudar de disco, este documento deve ser atualizado.
 ### Regras obrigatórias
 
 * Nenhum serviço com dados importantes pode usar volumes anónimos
-
 * Todos os serviços usam bind mounts explícitos
-
 * Cada stack vive na sua própria pasta
-
 * `docker-compose.yml`, `.env` e dados vivem juntos
 
 ---
@@ -154,9 +149,7 @@ Cada serviço vive em:
 Dentro da pasta existem sempre:
 
 * `docker-compose.yml`
-
 * `config/` (quando aplicável)
-
 * `data/` ou bind mounts documentados
 
 ---
@@ -164,9 +157,7 @@ Dentro da pasta existem sempre:
 #### Redes Docker
 
 * Evitar a rede bridge default quando não for necessária
-
 * Stacks multi-container usam rede própria definida no compose
-
 * Expor apenas as portas estritamente necessárias
 
 ---
@@ -174,7 +165,6 @@ Dentro da pasta existem sempre:
 #### Persistência de dados
 
 * Tudo o que precisa sobreviver a rebuild deve estar em bind mount
-
 * Os paths devem respeitar a secção 4 deste documento
 
 ---
@@ -182,7 +172,6 @@ Dentro da pasta existem sempre:
 #### Gestão de versões
 
 * Serviços críticos usam tags explícitas (evitar `latest`)
-
 * Atualizações feitas de forma controlada, com possibilidade de rollback
 
 ---
@@ -190,9 +179,7 @@ Dentro da pasta existem sempre:
 #### Segurança básica
 
 * Containers como utilizador não-root sempre que possível
-
 * Portas expostas minimizadas
-
 * Segredos nunca hardcoded em `docker-compose.yml` (usar `.env`)
 
 ---
@@ -202,9 +189,7 @@ Dentro da pasta existem sempre:
 Docker é tratado como camada descartável. O que é durável:
 
 * Dados persistentes nos bind mounts
-
 * `docker-compose.yml`
-
 * Estrutura de diretórios em `/srv/docker/`
 
 Se for necessário apagar `/var/lib/docker`, todos os serviços devem ser reconstruíveis com:
@@ -216,8 +201,6 @@ docker compose up -d
 ---
 
 ### Gestão de logs (prevenção de enchimento de disco)
-
-Esta configuração foi aplicada **no sistema real** para evitar repetição do problema histórico de logs a encher o disco de sistema.
 
 #### journald (systemd)
 
@@ -286,6 +269,8 @@ systemctl restart docker
 
 ### SABnzbd
 
+(ativo, stack operacional em `/srv/docker/services/sabnzbd`)
+
 ### Prowlarr
 
 | Item       | Valor                                    |
@@ -299,19 +284,6 @@ systemctl restart docker
 | Categoria  | Usa `prowlarr` como default              |
 | Validação  | Teste de ligação aprovado no UI          |
 | Estado     | Serviço funcional e integrado            |
-
-| Item                         | Valor                                                         |
-| ---------------------------- | ------------------------------------------------------------- |
-| Stack                        | `/srv/docker/services/prowlarr`                               |
-| Config                       | `/srv/docker/services/prowlarr/config`                        |
-| Container                    | lscr.io/linuxserver/prowlarr:1.21.2                           |
-| Porta                        | 9696 (apenas LAN)                                             |
-| Gestão                       | `docker compose up -d`                                        |
-| Integração                   | Ligado funcionalmente ao SABnzbd via LAN (`192.168.1.6:8080`) |
-| Categoria                    | Categoria `prowlarr` criada no SABnzbd e usada como default   |
-| Validação                    | Teste de ligação aprovado no UI do Prowlarr                   |
-| Estado                       | Serviço funcional e integrado                                 |
-| Serviço funcional e validado |                                                               |
 
 ### Monitoring
 
@@ -380,17 +352,11 @@ Separação explícita entre:
 /mnt/critical/photos/
 ```
 
-Este diretório contém:
-
-* Fotos originais
-* Vídeos originais
-* Estrutura de álbuns do utilizador
-
 Regras:
 
 * Estes ficheiros **não são propriedade do Immich**
 * Immich apenas consome este path por bind mount
-* Estes dados estão protegidos por ZFS + política de backup
+* Estes dados estão protegidos por ZFS + política de backup + snapshots
 
 #### Localização dos dados operacionais do Immich (não críticos)
 
@@ -407,43 +373,6 @@ Justificação:
 * Thumbnails e cache são regeneráveis
 * Perda implica incómodo, não perda de dados irreparável
 
-#### Consequência arquitetural importante
-
-* Se o Immich for destruído, atualizado ou reconstruído:
-
-  * As fotos continuam intactas em `/mnt/critical/photos-library`
-  * O serviço pode ser recriado apontando novamente para os mesmos dados
-
-Este modelo cumpre simultaneamente:
-
-* Separação entre dados e aplicação
-* Proteção máxima para dados pessoais
-* Flexibilidade operacional para containers
-
-/srv/docker/services/media/
-sabnzbd/
-docker-compose.yml
-config/
-radarr/
-docker-compose.yml
-config/
-sonarr/
-docker-compose.yml
-config/
-
-```
-
-Dados partilhados entre serviços:
-
-```
-
-/srv/data/scratch/downloads/incomplete
-/srv/data/scratch/downloads/complete
-/mnt/media/movies
-/mnt/media/tv
-
-```
-
 ---
 
 ## 8) Backups (estratégia real e operacional)
@@ -454,25 +383,20 @@ Ativo mais crítico: **fotos de família**.
 
 Cópias existentes atualmente:
 
-- NAS (fonte principal)
-
-- oinqserver (segunda cópia histórica)
-
-- Erebor (disco interno de 1 TB)
-
-- Disco externo 2 TB (cópia offline em criação)
+* NAS (fonte principal)
+* oinqserver (segunda cópia histórica)
+* Erebor (disco interno de 1 TB)
+* Disco externo 2 TB (cópia offline em criação)
 
 Objetivo desta fase:
 
-- Permitir reestruturação de discos sem risco
-
-- Garantir pelo menos **duas cópias offline e fisicamente separadas**
+* Permitir reestruturação de discos sem risco
+* Garantir pelo menos **duas cópias offline e fisicamente separadas**
 
 Estado considerado seguro:
 
-- 1 cópia online ativa
-
-- 2 cópias offline guardadas
+* 1 cópia online ativa
+* 2 cópias offline guardadas
 
 Enquanto esta condição não estiver garantida, **não são feitas operações destrutivas em nenhum disco**.
 
@@ -482,17 +406,14 @@ Enquanto esta condição não estiver garantida, **não são feitas operações 
 
 Dados considerados críticos:
 
-- `/mnt/critical/**`
-
-- Configurações importantes (HA, containers críticos, configs manuais)
+* `/mnt/critical/**`
+* Configurações importantes (HA, containers críticos, configs manuais)
 
 Regras estruturais:
 
-- 1 cópia primária no Erebor
-
-- 1 cópia secundária automática noutro sistema
-
-- 1 cópia offline periódica
+* 1 cópia primária no Erebor
+* 1 cópia secundária automática noutro sistema
+* 1 cópia offline periódica
 
 > Redundância (ex: ZFS mirror) **não é backup**.
 
@@ -500,23 +421,17 @@ Regras estruturais:
 
 ### 8.3 Mecanismo técnico previsto (a implementar)
 
-- Ferramenta: `rsync` ou `restic`
-
-- Origem: `/mnt/critical`
-
-- Destino: NAS ou disco dedicado
-
-- Frequência: diária ou semanal (a definir)
-
-- Logs verificáveis
+* Ferramenta: `rsync` ou `restic`
+* Origem: `/mnt/critical`
+* Destino: NAS ou disco dedicado
+* Frequência: diária ou semanal (a definir)
+* Logs verificáveis
 
 Backup offline:
 
-- Discos USB dedicados a backup
-
-- Ligados apenas durante cópia
-
-- Guardados fisicamente separados
+* Discos USB dedicados a backup
+* Ligados apenas durante cópia
+* Guardados fisicamente separados
 
 ---
 
@@ -524,19 +439,15 @@ Backup offline:
 
 Nunca:
 
-- Reestruturar storage
-
-- Destruir pools
-
-- Reutilizar discos
-
-- Formatar volumes
+* Reestruturar storage
+* Destruir pools
+* Reutilizar discos
+* Formatar volumes
 
 Sem antes confirmar:
 
-- Existem múltiplas cópias válidas
-
-- Pelo menos uma é offline
+* Existem múltiplas cópias válidas
+* Pelo menos uma é offline
 
 Se houver dúvida, assume-se que **não está seguro**.
 
@@ -546,11 +457,11 @@ Se houver dúvida, assume-se que **não está seguro**.
 
 Sempre que mudar:
 
-- discos físicos
-- mounts
-- estrutura de paths
-- serviços
-- decisões de arquitetura
+* discos físicos
+* mounts
+* estrutura de paths
+* serviços
+* decisões de arquitetura
 
 → Este documento deve ser atualizado primeiro.
 
@@ -578,7 +489,7 @@ IPs críticos:
 
 Regra absoluta:
 
-- Apenas o OPNSense fornece DHCP
+* Apenas o OPNSense fornece DHCP
 
 ---
 
@@ -587,27 +498,25 @@ Regra absoluta:
 Arquitetura de DNS:
 
 ```
-
 Clientes LAN → AdGuard Home (OPNSense :53)
 ↓
 Unbound (OPNSense :5353)
 ↓
 Internet
-
-````
+```
 
 Implementação:
 
-- AdGuard Home no OPNSense (binário FreeBSD oficial)
-- Serviço ativo na porta 53
-- Interface Web: [http://192.168.1.1:3000](http://192.168.1.1:3000)
-- Unbound como upstream na porta 5353
+* AdGuard Home no OPNSense (binário FreeBSD oficial)
+* Serviço ativo na porta 53
+* Interface Web: [http://192.168.1.1:3000](http://192.168.1.1:3000)
+* Unbound como upstream na porta 5353
 
 Resultado:
 
-- DNS funcional mesmo sem servidores ligados
-- Filtragem ao nível da infraestrutura
-- Observabilidade por cliente
+* DNS funcional mesmo sem servidores ligados
+* Filtragem ao nível da infraestrutura
+* Observabilidade por cliente
 
 ---
 
@@ -622,9 +531,9 @@ Resultado:
 
 Escopo:
 
-- Plataforma HA
-- Integrações genéricas (Glances, notificações, dashboards)
-- Estrutura base (não específica de sistemas externos)
+* Plataforma HA
+* Integrações genéricas (Glances, notificações, dashboards)
+* Estrutura base (não específica de sistemas externos)
 
 ---
 
@@ -632,13 +541,10 @@ Escopo:
 
 ### Resumo técnico
 
-- Cerbo GX integrado via MQTT local (bridge Mosquitto)
-
-- Tópicos nativos Venus OS: `N/<serial>/#` e `R/<serial>/#`
-
-- Sensores definidos via packages YAML
-
-- Integração totalmente local (sem cloud)
+* Cerbo GX integrado via MQTT local (bridge Mosquitto)
+* Tópicos nativos Venus OS: `N/<serial>/#` e `R/<serial>/#`
+* Sensores definidos via packages YAML
+* Integração totalmente local (sem cloud)
 
 ---
 
@@ -646,19 +552,18 @@ Escopo:
 
 O Cerbo publica tópicos no formato:
 
-- `N/<serial>/<service>/<path>`
+* `N/<serial>/<service>/<path>`
 
 Exemplo real:
 
-- `N/<serial>/battery/0/Soc`
+* `N/<serial>/battery/0/Soc`
 
 O Home Assistant consome diretamente estes tópicos.
 
 A comunicação é bidirecional:
 
-- Leitura: `N/<serial>/#`
-
-- Escrita: `R/<serial>/#`
+* Leitura: `N/<serial>/#`
+* Escrita: `R/<serial>/#`
 
 ---
 
@@ -674,14 +579,12 @@ sensor:
     unit_of_measurement: "W"
     device_class: power
     state_class: measurement
-````
+```
 
 Regras obrigatórias:
 
 * Não duplicar sensores para o mesmo tópico
-
 * Manter nomenclatura consistente
-
 * Cada sensor novo deve ser documentado aqui
 
 ---
@@ -707,7 +610,7 @@ Alterações neste ficheiro sobrevivem a reboots e updates do add-on.
 2. Abrir o ficheiro:
 
    ```
-   \\192.168.1.2\share\mosquitto\mosquitto.conf
+   \\\\192.168.1.2\\share\\mosquitto\\mosquitto.conf
    ```
 
 3. Alterar a linha `address x.x.x.x`
@@ -719,9 +622,7 @@ Alterações neste ficheiro sobrevivem a reboots e updates do add-on.
 Resultado esperado:
 
 * Bridge reconecta
-
 * Tópicos reaparecem
-
 * Sensores retomam automaticamente
 
 > Nota: o Cerbo deve ter sempre reserva DHCP. Este procedimento é apenas recuperação de falha.
@@ -774,53 +675,31 @@ Propriedades ativas no pool:
 * autotrim=on
 * ACL e xattrs ativos
 
-O pool foi validado após:
+### Datasets existentes
 
-* limpeza destrutiva dos discos (mdadm, sgdisk, wipefs)
-* criação nova do mirror
-* mudança física de cabos SATA → backplane
-* Sem necessidade de reimportação e sem degradação
-
-Conclusão: configuração robusta e independente da ordem das portas.
+| Dataset            | Mountpoint                | Função        | recordsize |
+| ------------------ | ------------------------- | ------------- | ---------- |
+| critical/photos    | `/mnt/critical/photos`    | Fotos/vídeos  | 1M         |
+| critical/documents | `/mnt/critical/documents` | Documentos    | 128K       |
+| critical/configs   | `/mnt/critical/configs`   | Configurações | 16K        |
+| critical/backups   | `/mnt/critical/backups`   | Backups       | 1M         |
 
 ### Integridade dos dados migrados
 
-Dados já migrados para ZFS:
+Dados migrados e verificados para ZFS:
 
 * Fotos de família (~963 GB)
+* Verificação via `rsync --dry-run --delete` sem diferenças
 
-Cópia realizada com `rsync` e verificada com execução incremental posterior:
-
-Resultado confirmado:
-
-* 69 995 ficheiros
-* ~963 GB
-* 0 diferenças
-* Estrutura, timestamps e tamanhos coerentes
-
-Os dados em `/mnt/critical` são considerados consistentes.
+Conclusão: dados consistentes.
 
 ### Estado SMART dos discos validados
 
-Discos atualmente considerados saudáveis:
-
-* SSD Samsung 750 EVO 250 GB
-* SSD Samsung 850 EVO 250 GB
-* HDD WD 320 GB
-* HDD WD 4 TB (x2)
-* Dois discos 18 TB do pool ZFS
-
-Nenhum disco apresenta:
-
-* sectores realocados
-* sectores pendentes
-* sectores incorrigíveis
+Nenhum disco apresenta sectores realocados, pendentes ou incorrigíveis.
 
 ---
 
 ## 16) Storage não-ZFS (discos auxiliares)
-
-Esta secção reflete o estado **real implementado** dos discos auxiliares após limpeza completa, formatação e montagem persistente.
 
 ### Filesystems criados
 
@@ -834,8 +713,6 @@ Esta secção reflete o estado **real implementado** dos discos auxiliares após
 
 ### Montagem persistente (`/etc/fstab`)
 
-Entradas ativas:
-
 ```
 LABEL=docker-data  /srv/docker-data      ext4  defaults,noatime  0 2
 LABEL=movies       /mnt/media/movies     ext4  defaults,noatime  0 2
@@ -843,14 +720,62 @@ LABEL=tv           /mnt/media/tv         ext4  defaults,noatime  0 2
 LABEL=scratch      /srv/data/scratch     ext4  defaults,noatime  0 2
 ```
 
-### Estado validado
+Conclusão: camada de storage auxiliar concluída e estável.
 
-* Todos os mounts testados com `umount` + `mount -a`
-* Todos reaparecem corretamente após reload do systemd
-* `df -h` confirma tamanhos e localizações corretas
-* Nenhum impacto nos discos ZFS ou no disco de sistema
+---
 
-Conclusão: a camada de storage auxiliar está **concluída e estável**.
+## 17) Política de snapshots ZFS (implementada)
+
+### Objetivo
+
+Proteger dados críticos contra apagamentos acidentais, corrupção lógica e erro humano, com retenção previsível e mecanismo totalmente auditável.
+
+### Implementação técnica real
+
+* Mecanismo próprio baseado em script + systemd timers (não dependente de pacotes externos instáveis).
+* Script de gestão de snapshots:
+
+```
+/usr/local/sbin/zfs-snapshot.sh
+```
+
+Datasets protegidos pelo mecanismo:
+
+* `critical/photos`
+* `critical/documents`
+* `critical/configs`
+
+Dataset excluído explicitamente:
+
+* `critical/backups`
+
+### Política de retenção ativa
+
+| Tipo    | Frequência | Retenção |
+| ------- | ---------- | -------- |
+| hourly  | 1 hora     | 24       |
+| daily   | 1 dia      | 14       |
+| weekly  | 1 semana   | 8        |
+| monthly | 1 mês      | 6        |
+
+### Integração com systemd
+
+Timers ativos:
+
+* `zfs-snapshot-hourly.timer`
+* `zfs-snapshot-daily.timer`
+* `zfs-snapshot-weekly.timer`
+* `zfs-snapshot-monthly.timer`
+
+Cada timer executa o script com os parâmetros apropriados de retenção.
+
+### Validação
+
+* Execução manual confirmada com criação real de snapshots
+* `systemctl list-timers` confirma timers ativos
+* `zfs list -t snapshot` mostra snapshots coerentes por dataset
+
+Conclusão: camada de snapshots funcional, previsível e sob controlo direto.
 
 ---
 
@@ -860,6 +785,9 @@ Este documento reflete o estado **real e operacional** do servidor Erebor após:
 
 * Limpeza controlada dos discos
 * Reestruturação completa do layout de storage
+* Implementação de datasets ZFS
+* Afinação de propriedades por tipo de dado
+* Implementação de snapshots automáticos com retenção definida
 * Implementação de mounts persistentes alinhados com a arquitetura
 
 A partir daqui, qualquer evolução (Docker, serviços, automações, backups, etc.) deve ser documentada aqui primeiro.
