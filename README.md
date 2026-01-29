@@ -513,6 +513,108 @@ Resultado:
 
 Escopo:
 
+* Plataforma HA como orquestrador central da casa
+* Integrações genéricas (Glances, notificações, dashboards)
+* Integrações críticas locais (energia, sensores, atuadores)
+* Estrutura declarativa e versionável via YAML (packages)
+
+### Princípio estrutural
+
+O Home Assistant é tratado como **camada de controlo e observabilidade**, não como fonte primária de dados.
+
+Regra fundamental:
+
+> **Os sensores base (contadores físicos, inversores, medidores) são a verdade.**
+> O Home Assistant apenas agrega, deriva e apresenta.
+
+Qualquer lógica que possa ser reconstruída **deve ser reconstruível**.
+
+---
+
+### Energia — modelo adotado (fonte de verdade)
+
+A gestão de energia no Home Assistant segue um modelo estritamente hierárquico e auditável.
+
+1. **Sensores base**
+   Contadores físicos e lógicos que representam valores reais e cumulativos (kWh), tipicamente com `state_class: total_increasing`.
+
+2. **Sensores de conveniência (template)**
+   Sensores derivados usados apenas para:
+
+   * somas (ex: tarifário 1 + 2)
+   * conversões (ex: m³ → kWh)
+   * normalização de nomes
+
+   Estes sensores **não criam histórico próprio relevante** e podem ser recriados a qualquer momento.
+
+3. **Utility meters**
+   Único mecanismo autorizado para:
+
+   * daily / monthly / yearly roll-ups
+   * dashboards históricos
+   * estatísticas de consumo e produção
+
+---
+
+### Consolidação de utility meters
+
+Decisão arquitetural tomada:
+
+> **Todos os utility meters passam a ser definidos exclusivamente em YAML, via packages.**
+
+Implicações:
+
+* Utility meters criados pela UI foram removidos
+* O histórico manteve-se intacto (baseado em estatísticas)
+* A UI deixa de ser fonte de verdade para energia
+
+Benefícios:
+
+* Configuração versionável em Git
+* Reprodutibilidade total em caso de rebuild
+* Eliminação de duplicações e nomes ambíguos
+
+---
+
+### Organização prática
+
+Os utility meters de energia encontram-se organizados por domínio funcional:
+
+* Rede elétrica (importação / exportação)
+* Produção fotovoltaica
+* Baterias (carga / descarga / energia acumulada)
+* Consumos dedicados (EV charger, boiler, cargas AC)
+* Gás (m³ e conversão para kWh)
+
+Cada domínio segue as mesmas regras:
+
+* Sensor base cumulativo
+* Zero lógica na UI
+* Roll-ups apenas via `utility_meter`
+
+---
+
+### Regra operacional
+
+* Nunca criar utility meters pela UI
+* Nunca apagar sensores base com histórico sem auditoria prévia
+* Qualquer alteração energética deve ser refletida:
+
+  * no package YAML correspondente
+  * e neste documento
+
+Se o Home Assistant for destruído e reinstalado, **toda a camada energética deve ser reconstruível apenas com YAML + histórico do recorder**.
+
+---
+
+---------- | -------------------------------- |
+| Plataforma    | Home Assistant OS                |
+| IP            | 192.168.1.2                      |
+| Acesso remoto | Tailscale                        |
+| Função        | Controlador central de automação |
+
+Escopo:
+
 * Plataforma HA
 * Integrações genéricas (Glances, notificações, dashboards)
 * Estrutura base (não específica de sistemas externos)
