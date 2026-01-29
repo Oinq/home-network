@@ -253,45 +253,65 @@ Configurado em `/etc/docker/daemon.json`:
 
 (ativo, stack operacional em `/srv/docker/services/sabnzbd`)
 
+### Radarr
+
+| Item       | Valor                                      |
+| ---------- | ------------------------------------------ |
+| Stack      | `/srv/docker/services/media/radarr`        |
+| Config     | `/srv/docker/services/media/radarr/config` |
+| Container  | `lscr.io/linuxserver/radarr`               |
+| Porta      | `7878` (LAN)                               |
+| Root       | `/mnt/media/movies`                        |
+| Integração | SABnzbd + Prowlarr                         |
+| Validação  | Import automático confirmado               |
+| Estado     | Serviço funcional e validado               |
+
+### Sonarr
+
+| Item       | Valor                                      |
+| ---------- | ------------------------------------------ |
+| Stack      | `/srv/docker/services/media/sonarr`        |
+| Config     | `/srv/docker/services/media/sonarr/config` |
+| Container  | `lscr.io/linuxserver/sonarr`               |
+| Porta      | `8989` (LAN)                               |
+| Root       | `/mnt/media/tv`                            |
+| Integração | SABnzbd + Prowlarr                         |
+| Validação  | Import automático confirmado               |
+| Estado     | Serviço funcional e validado               |
+
 ### Prowlarr
 
-| Item       | Valor                                    |
-| ---------- | ---------------------------------------- |
-| Stack      | `/srv/docker/services/prowlarr`          |
-| Config     | `/srv/docker/services/prowlarr/config`   |
-| Container  | `lscr.io/linuxserver/prowlarr:1.21.2`    |
-| Porta      | `9696` (LAN)                             |
-| Gestão     | `docker compose up -d`                   |
-| Integração | Ligado ao SABnzbd via `192.168.1.6:8080` |
-| Categoria  | Usa `prowlarr` como default              |
-| Validação  | Teste de ligação aprovado no UI          |
-| Estado     | Serviço funcional e integrado            |
+| Item       | Valor                                  |
+| ---------- | -------------------------------------- |
+| Stack      | `/srv/docker/services/prowlarr`        |
+| Config     | `/srv/docker/services/prowlarr/config` |
+| Container  | `lscr.io/linuxserver/prowlarr`         |
+| Porta      | `9696` (LAN)                           |
+| Integração | Ligado ao SABnzbd, Radarr e Sonarr     |
+| Estado     | Serviço funcional e integrado          |
 
 ### Monitoring
 
 * Glances como serviço systemd
-* Home Assistant ligado via integração Glances
+* Integração ativa no Home Assistant
 * Métricas visíveis: CPU, RAM, disco, temperaturas, rede, uptime
 
 ### Tailscale
 
 * Erebor como node ativo
 * Subnet routing: `192.168.1.0/24`
-* Conectividade validada externamente
+* Conectividade externa validada
 
 ---
 
-## 7) Estrutura planeada (media stack e Immich)
+## 7) Estrutura implementada (media stack e Immich)
 
 ### Media stack (dados não críticos, fora de ZFS)
 
-Estrutura alvo para serviços de media:
+Estrutura real implementada:
 
 ```
 /srv/docker/services/media/
-  sabnzbd/
-    docker-compose.yml
-    config/
   radarr/
     docker-compose.yml
     config/
@@ -309,51 +329,43 @@ Dados partilhados entre serviços:
 /mnt/media/tv
 ```
 
-Justificação documentada:
+Estado:
 
-* Filmes e séries são considerados **dados não críticos**
-* Perda é inconveniente mas recuperável
-* Não justificam consumo de espaço nem complexidade em ZFS
+* Pipeline SABnzbd → ARRs → media final validado
+* Import automático confirmado para filmes e séries
+* Downloads de teste realizados em 1080p **apenas para validação técnica**
+
+### Nota sobre perfis
+
+Os perfis atuais **não representam o estado final desejado**.
+
+Próximo passo obrigatório:
+
+* Definir perfis finais de qualidade
+* Documentar explicitamente esses perfis neste ficheiro
+* Remover media de teste após validação
 
 ---
 
-### Immich (arquitetura híbrida aprovada)
+### Jellyfin (planeado)
 
-Princípio adotado:
+Estado: **não instalado**.
 
-> **Os dados pertencem ao utilizador, não à aplicação.**
-
-Separação explícita entre:
-
-* **Dados importantes (fotos e vídeos originais)** → ZFS
-* **Dados derivados e operacionais (metadados, cache, DB)** → fora de ZFS
-
-#### Localização dos dados de utilizador (críticos)
+Planeado como servidor de media, consumindo exclusivamente:
 
 ```
-/mnt/critical/photos/
+/mnt/media/movies
+/mnt/media/tv
 ```
 
-Regras:
+Sem escrita nesses paths.
 
-* Estes ficheiros **não são propriedade do Immich**
-* Immich apenas consome este path por bind mount
-* Estes dados estão protegidos por ZFS + política de backup + snapshots
+### Overseerr (planeado)
 
-#### Localização dos dados operacionais do Immich (não críticos)
+Estado: **não instalado**.
 
-```
-/srv/docker/services/immich/
-  docker-compose.yml
-  config/
-  data/   → base de dados, thumbnails, cache, ML, redis, etc.
-```
+Planeado como interface de pedidos de media, integrado com Radarr e Sonarr, sem acesso direto ao filesystem.
 
-Justificação:
-
-* Base de dados pode ser reconstruída
-* Thumbnails e cache são regeneráveis
-* Perda implica incómodo, não perda de dados irreparável
 
 ---
 
