@@ -143,3 +143,19 @@ Regra de segurança:
 ---
 
 **Estado:** consistente, operativo e alinhado com a arquitetura real do Erebor.
+
+
+
+---
+
+## Documentação derivada (referências)
+
+Este ficheiro define o estado constitucional do Erebor.
+Os documentos abaixo detalham a implementação por domínio e nunca o contradizem.
+
+* `10-storage-zfs.md` — Storage ZFS e política de snapshots
+* `20-docker.md` — Modelo operativo do Docker
+* `21-docker-media-stack.md` — Media stack (Radarr, Sonarr, Bazarr, Jellyfin, Jellyseerr)
+* `30-backups.md` — Estratégia e estado dos backups
+* `40-home-assistant.md` — Modelo operacional do Home Assistant
+* `41-victron-mqtt.md` — Integração Victron & MQTT
