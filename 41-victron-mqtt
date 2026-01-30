@@ -128,3 +128,16 @@ Resultado esperado:
 * Qualquer sensor novo deve ser documentado.
 * Alterações à bridge MQTT devem ser refletidas neste documento.
 * Divergência entre este ficheiro e a realidade torna este ficheiro incorreto.
+
+---
+
+Modelo de integração Victron ↔ Home Assistant via MQTT
+
+A integração entre o Victron Cerbo GX e o Home Assistant é feita através de MQTT, utilizando exclusivamente a infraestrutura local.
+O Cerbo GX publica os seus dados nativos do Venus OS em tópicos MQTT no formato N/<serial>/#, enquanto comandos e controlos podem ser enviados através de R/<serial>/#.
+
+O broker Mosquitto local funciona como ponto central de comunicação. O Home Assistant subscreve diretamente os tópicos MQTT do Cerbo GX, sem tradução intermédia, garantindo acesso completo às entidades nativas do sistema Victron (VE.Bus, battery, system, solarcharger, entre outras).
+
+Os sensores Victron são definidos no Home Assistant através de packages em YAML, baseados diretamente nos tópicos MQTT nativos do Venus OS. Este modelo garante uma integração totalmente local, determinística e independente de qualquer serviço externo.
+
+Estados internos críticos do sistema, como o modo operacional do VE.Bus (por exemplo: Inverting, External control, Assisting), são expostos como sensores MQTT e posteriormente traduzidos em sensores template. Isto permite diagnóstico fino, automação energética e análise comportamental detalhada do sistema, sem perda de informação nem abstrações artificiais.
