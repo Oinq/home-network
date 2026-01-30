@@ -333,17 +333,78 @@ Estado:
 
 * Pipeline SABnzbd → ARRs → media final validado
 * Import automático confirmado para filmes e séries
-* Downloads de teste realizados em 1080p **apenas para validação técnica**
+* Downloads de teste realizados em 1080p **apenas para validação técnica (já removidos)**
 
-### Nota sobre perfis
+### Política de qualidade de media (perfis finais)
 
-Os perfis atuais **não representam o estado final desejado**.
+A escolha de qualidade de media segue uma política explícita e intencional, independente da disponibilidade de legendas.
 
-Próximo passo obrigatório:
+Princípios adotados:
 
-* Definir perfis finais de qualidade
-* Documentar explicitamente esses perfis neste ficheiro
-* Remover media de teste após validação
+* Priorizar sempre **WEB-DL** sobre BluRay
+* Preferir **2160p (4K)** quando disponível
+* Utilizar **1080p apenas como fallback**
+* **REMUX não é usado como default**
+* A gestão de legendas é delegada a Bazarr + tradução automática (ver secção própria)
+
+---
+
+#### Radarr — Perfil default
+
+**Nome do perfil:**  
+`WEB-DL Preferred (2160p → 1080p)`
+
+Ordem de preferência:
+
+1. WEB-DL 2160p  
+2. BluRay 2160p  
+3. WEB-DL 1080p  
+4. BluRay 1080p  
+
+Configuração:
+
+* Cutoff: `WEB-DL 2160p`
+* REMUX: desativado
+* Qualidades abaixo de 1080p: desativadas
+
+Objetivo:
+
+* Obter a melhor qualidade disponível de forma automática
+* Permitir upgrades quando surgirem releases superiores
+* Evitar ficheiros excessivamente grandes por defeito
+
+---
+
+#### Sonarr — Perfil default
+
+**Nome do perfil:**  
+`WEB-DL Preferred (2160p → 1080p)`
+
+Ordem de preferência:
+
+1. WEB-DL 2160p  
+2. BluRay 2160p  
+3. WEB-DL 1080p  
+4. BluRay 1080p  
+
+Configuração:
+
+* Cutoff: `WEB-DL 2160p`
+* Qualidades abaixo de 1080p: desativadas
+
+Objetivo:
+
+* Consistência entre filmes e séries
+* Máxima qualidade possível sem intervenção manual
+* Comportamento previsível ao longo do tempo
+
+---
+
+#### Nota sobre REMUX
+
+Conteúdos REMUX não fazem parte do profile default.
+
+Caso se justifique, poderá existir um profile separado dedicado a REMUX, utilizado apenas de forma manual e pontual.
 
 ---
 
