@@ -1,0 +1,130 @@
+# Victron & MQTT — Integração Crítica (Erebor)
+
+Este documento descreve a **integração real entre Victron (Cerbo GX) e Home Assistant via MQTT** no ecossistema do servidor **erebor**. É documentação derivada de `00-EREBOR-SOURCE-OF-TRUTH.md` e não o contradiz.
+
+---
+
+## Visão geral
+
+* Sistema Victron tratado como **infraestrutura crítica da casa**.
+* Integração totalmente local, sem dependências cloud.
+* Comunicação baseada em MQTT nativo do Venus OS.
+
+---
+
+## Componentes
+
+| Componente            | Função                      |
+| --------------------- | --------------------------- |
+| Cerbo GX              | Controlador central Victron |
+| Venus OS              | Sistema operativo do Cerbo  |
+| Mosquitto (HA add-on) | Broker MQTT local           |
+| Home Assistant        | Consumidor e controlador    |
+
+---
+
+## Arquitetura MQTT
+
+O Cerbo GX publica tópicos nativos no formato:
+
+```
+N/<serial>/<service>/<path>
+```
+
+Exemplo real:
+
+```
+N/<serial>/battery/0/Soc
+```
+
+Fluxos suportados:
+
+* **Leitura:** `N/<serial>/#`
+* **Escrita:** `R/<serial>/#`
+
+A comunicação é bidirecional.
+
+---
+
+## Integração no Home Assistant
+
+* Sensores definidos exclusivamente via YAML (packages).
+* Não existe duplicação de sensores para o mesmo tópico.
+* Nomenclatura consistente e previsível.
+
+Exemplo de sensor base:
+
+```yaml
+sensor:
+  - platform: mqtt
+    name: "Victron Battery Power"
+    state_topic: "N/<serial>/system/0/Dc/Battery/Power"
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+```
+
+---
+
+## Localização real da bridge Mosquitto
+
+A bridge MQTT vive no add-on oficial **Mosquitto broker** do Home Assistant.
+
+Caminho real do ficheiro de configuração:
+
+```
+\\192.168.1.2\share\mosquitto\mosquitto.conf
+```
+
+Alterações neste ficheiro:
+
+* Sobrevivem a reboots.
+* Sobrevivem a updates do add-on.
+
+---
+
+## Procedimento de recuperação (Cerbo muda de IP)
+
+1. Identificar novo IP via OPNSense (DHCP leases).
+2. Abrir o ficheiro:
+
+```
+\\192.168.1.2\share\mosquitto\mosquitto.conf
+```
+
+3. Atualizar a linha:
+
+```
+address x.x.x.x
+```
+
+4. Guardar alterações.
+5. Reiniciar o add-on Mosquitto no Home Assistant.
+
+Resultado esperado:
+
+* Bridge reconecta.
+* Tópicos reaparecem.
+* Sensores retomam automaticamente.
+
+> Nota: o Cerbo deve ter sempre reserva DHCP. Este procedimento é apenas recuperação de falha.
+
+---
+
+## Capacidade energética (contexto)
+
+| Elemento   | Valor                    |
+| ---------- | ------------------------ |
+| Inversores | 3 × MultiPlus 48/5000-70 |
+| MPPT       | 450/200                  |
+| Baterias   | 4 × 5 kWh                |
+| Autonomia  | ~8 meses off-grid        |
+
+---
+
+## Regra operacional
+
+* Não duplicar sensores para o mesmo tópico MQTT.
+* Qualquer sensor novo deve ser documentado.
+* Alterações à bridge MQTT devem ser refletidas neste documento.
+* Divergência entre este ficheiro e a realidade torna este ficheiro incorreto.
