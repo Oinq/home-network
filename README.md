@@ -235,82 +235,97 @@ Configurado em `/etc/docker/daemon.json`:
 
 ---
 
-## 6) Serviços atualmente ativos
+6) Serviços atualmente ativos
+Minecraft
+Item	Valor
+Stack	/srv/docker/services/minecraft
+Dados	/srv/docker/services/minecraft/data
+Container	itzg/minecraft-server
+Gestão	docker compose up -d
+Autenticação	Modo offline (ONLINE_MODE=FALSE)
+Validação	Mundo real recuperado do oinqserver e confirmado in-game
+Estado	Serviço funcional e validado
+SABnzbd
 
-### Minecraft
+(ativo, stack operacional em /srv/docker/services/sabnzbd)
 
-| Item         | Valor                                                    |
-| ------------ | -------------------------------------------------------- |
-| Stack        | `/srv/docker/services/minecraft`                         |
-| Dados        | `/srv/docker/services/minecraft/data`                    |
-| Container    | itzg/minecraft-server                                    |
-| Gestão       | `docker compose up -d`                                   |
-| Autenticação | Modo offline (`ONLINE_MODE=FALSE`)                       |
-| Validação    | Mundo real recuperado do oinqserver e confirmado in-game |
-| Estado       | Serviço funcional e validado                             |
+Radarr
+Item	Valor
+Stack	/srv/docker/services/media/radarr
+Config	/srv/docker/services/media/radarr/config
+Container	lscr.io/linuxserver/radarr
+Porta	7878 (LAN)
+Root	/mnt/media/movies
+Integração	SABnzbd + Prowlarr + Jellyseerr
+Validação	Import automático confirmado
+Estado	Serviço funcional e validado
+Sonarr
+Item	Valor
+Stack	/srv/docker/services/media/sonarr
+Config	/srv/docker/services/media/sonarr/config
+Container	lscr.io/linuxserver/sonarr
+Porta	8989 (LAN)
+Root	/mnt/media/tv
+Integração	SABnzbd + Prowlarr + Jellyseerr
+Validação	Import automático confirmado
+Estado	Serviço funcional e validado
+Prowlarr
+Item	Valor
+Stack	/srv/docker/services/prowlarr
+Config	/srv/docker/services/prowlarr/config
+Container	lscr.io/linuxserver/prowlarr
+Porta	9696 (LAN)
+Integração	Ligado ao SABnzbd, Radarr e Sonarr
+Estado	Serviço funcional e integrado
+Bazarr
+Item	Valor
+Stack	/srv/docker/services/media/bazarr
+Config	/srv/docker/services/media/bazarr/config
+Container	lscr.io/linuxserver/bazarr
+Integração	Radarr + Sonarr
+Política	Legendas PT preferidas + fallback EN
+Tradução	Automática via Google Translate
+Validação	Legendas PT externas confirmadas
+Estado	Serviço funcional e validado
+Jellyfin
+Item	Valor
+Stack	/srv/docker/services/jellyfin
+Config	/srv/docker/services/jellyfin/config
+Porta	8096 (LAN)
+Media	/mnt/media/movies, /mnt/media/tv
+Escrita	Não (read-only sobre media)
+Validação	Playback e legendas PT confirmadas
+Estado	Serviço funcional e validado
+Jellyseerr
+Item	Valor
+Stack	/srv/docker/services/jellyseerr
+Config	/srv/docker/services/jellyseerr/config
+Porta	5055 (LAN)
+Integração	Jellyfin + Radarr + Sonarr
+Auth	Local (sem Plex)
+Função	Interface de pedidos de media
+Estado	Serviço funcional e validado
+Monitoring
 
-### SABnzbd
+Glances como serviço systemd
 
-(ativo, stack operacional em `/srv/docker/services/sabnzbd`)
+Integração ativa no Home Assistant
 
-### Radarr
+Métricas visíveis: CPU, RAM, disco, temperaturas, rede, uptime
 
-| Item       | Valor                                      |
-| ---------- | ------------------------------------------ |
-| Stack      | `/srv/docker/services/media/radarr`        |
-| Config     | `/srv/docker/services/media/radarr/config` |
-| Container  | `lscr.io/linuxserver/radarr`               |
-| Porta      | `7878` (LAN)                               |
-| Root       | `/mnt/media/movies`                        |
-| Integração | SABnzbd + Prowlarr                         |
-| Validação  | Import automático confirmado               |
-| Estado     | Serviço funcional e validado               |
+Tailscale
 
-### Sonarr
+Erebor como node ativo
 
-| Item       | Valor                                      |
-| ---------- | ------------------------------------------ |
-| Stack      | `/srv/docker/services/media/sonarr`        |
-| Config     | `/srv/docker/services/media/sonarr/config` |
-| Container  | `lscr.io/linuxserver/sonarr`               |
-| Porta      | `8989` (LAN)                               |
-| Root       | `/mnt/media/tv`                            |
-| Integração | SABnzbd + Prowlarr                         |
-| Validação  | Import automático confirmado               |
-| Estado     | Serviço funcional e validado               |
+Subnet routing: 192.168.1.0/24
 
-### Prowlarr
+Conectividade externa validada
 
-| Item       | Valor                                  |
-| ---------- | -------------------------------------- |
-| Stack      | `/srv/docker/services/prowlarr`        |
-| Config     | `/srv/docker/services/prowlarr/config` |
-| Container  | `lscr.io/linuxserver/prowlarr`         |
-| Porta      | `9696` (LAN)                           |
-| Integração | Ligado ao SABnzbd, Radarr e Sonarr     |
-| Estado     | Serviço funcional e integrado          |
-
-### Monitoring
-
-* Glances como serviço systemd
-* Integração ativa no Home Assistant
-* Métricas visíveis: CPU, RAM, disco, temperaturas, rede, uptime
-
-### Tailscale
-
-* Erebor como node ativo
-* Subnet routing: `192.168.1.0/24`
-* Conectividade externa validada
-
----
-
-## 7) Estrutura implementada (media stack e Immich)
-
-### Media stack (dados não críticos, fora de ZFS)
+7) Estrutura implementada (media stack e Immich)
+Media stack (dados não críticos, fora de ZFS)
 
 Estrutura real implementada:
 
-```
 /srv/docker/services/media/
   radarr/
     docker-compose.yml
@@ -318,115 +333,110 @@ Estrutura real implementada:
   sonarr/
     docker-compose.yml
     config/
-```
+  bazarr/
+    docker-compose.yml
+    config/
+  jellyseerr/
+    docker-compose.yml
+    config/
+
 
 Dados partilhados entre serviços:
 
-```
 /srv/data/scratch/downloads/incomplete
 /srv/data/scratch/downloads/complete
 /mnt/media/movies
 /mnt/media/tv
-```
+
 
 Estado:
 
-* Pipeline SABnzbd → ARRs → media final validado
-* Import automático confirmado para filmes e séries
-* Downloads de teste realizados em 1080p **apenas para validação técnica (já removidos)**
+Pipeline completo validado:
 
-### Política de qualidade de media (perfis finais)
+Jellyseerr → Radarr / Sonarr → SABnzbd → Bazarr → Jellyfin
+
+
+Import automático confirmado para filmes e séries
+
+Legendas PT automáticas confirmadas
+
+Downloads de teste realizados em 1080p apenas para validação técnica (já removidos)
+
+Política de qualidade de media (perfis finais)
 
 A escolha de qualidade de media segue uma política explícita e intencional, independente da disponibilidade de legendas.
 
 Princípios adotados:
 
-* Priorizar sempre **WEB-DL** sobre BluRay
-* Preferir **2160p (4K)** quando disponível
-* Utilizar **1080p apenas como fallback**
-* **REMUX não é usado como default**
-* A gestão de legendas é delegada a Bazarr + tradução automática (ver secção própria)
+Priorizar sempre WEB-DL sobre BluRay
 
----
+Preferir 2160p (4K) quando disponível
 
-#### Radarr — Perfil default
+Utilizar 1080p apenas como fallback
 
-**Nome do perfil:**  
-`WEB-DL Preferred (2160p → 1080p)`
+REMUX não é usado como default
 
-Ordem de preferência:
+A gestão de legendas é delegada a Bazarr + tradução automática
 
-1. WEB-DL 2160p  
-2. BluRay 2160p  
-3. WEB-DL 1080p  
-4. BluRay 1080p  
+Radarr — Perfil default
 
-Configuração:
-
-* Cutoff: `WEB-DL 2160p`
-* REMUX: desativado
-* Qualidades abaixo de 1080p: desativadas
-
-Objetivo:
-
-* Obter a melhor qualidade disponível de forma automática
-* Permitir upgrades quando surgirem releases superiores
-* Evitar ficheiros excessivamente grandes por defeito
-
----
-
-#### Sonarr — Perfil default
-
-**Nome do perfil:**  
-`WEB-DL Preferred (2160p → 1080p)`
+Nome do perfil:
+WEB-DL Preferred (2160p → 1080p)
 
 Ordem de preferência:
 
-1. WEB-DL 2160p  
-2. BluRay 2160p  
-3. WEB-DL 1080p  
-4. BluRay 1080p  
+WEB-DL 2160p
+
+BluRay 2160p
+
+WEB-DL 1080p
+
+BluRay 1080p
 
 Configuração:
 
-* Cutoff: `WEB-DL 2160p`
-* Qualidades abaixo de 1080p: desativadas
+Cutoff: WEB-DL 2160p
 
-Objetivo:
+REMUX: desativado
 
-* Consistência entre filmes e séries
-* Máxima qualidade possível sem intervenção manual
-* Comportamento previsível ao longo do tempo
+Qualidades abaixo de 1080p: desativadas
 
----
+Sonarr — Perfil default
 
-#### Nota sobre REMUX
+Nome do perfil:
+WEB-DL Preferred (2160p → 1080p)
+
+Ordem de preferência:
+
+WEB-DL 2160p
+
+BluRay 2160p
+
+WEB-DL 1080p
+
+BluRay 1080p
+
+Configuração:
+
+Cutoff: WEB-DL 2160p
+
+Qualidades abaixo de 1080p: desativadas
+
+Nota sobre REMUX
 
 Conteúdos REMUX não fazem parte do profile default.
 
-Caso se justifique, poderá existir um profile separado dedicado a REMUX, utilizado apenas de forma manual e pontual.
+Se necessário, poderá existir um profile separado dedicado a REMUX, utilizado apenas de forma manual e pontual.
 
----
+Nota arquitetural — Overseerr
 
-### Jellyfin (planeado)
+Overseerr foi explicitamente rejeitado por exigir autenticação obrigatória via conta Plex.
 
-Estado: **não instalado**.
+Esta dependência viola o princípio base desta stack:
 
-Planeado como servidor de media, consumindo exclusivamente:
+Sistema totalmente local, sem dependências externas obrigatórias.
 
-```
-/mnt/media/movies
-/mnt/media/tv
-```
-
-Sem escrita nesses paths.
-
-### Overseerr (planeado)
-
-Estado: **não instalado**.
-
-Planeado como interface de pedidos de media, integrado com Radarr e Sonarr, sem acesso direto ao filesystem.
-
+Jellyseerr foi adotado como alternativa funcional e alinhada com esta filosofia.
 
 ---
 
