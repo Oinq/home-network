@@ -1,0 +1,153 @@
+# Docker — Modelo Operativo (Erebor)
+
+Este documento descreve o **modelo operativo real do Docker** no servidor **erebor**. É documentação derivada de `00-EREBOR-SOURCE-OF-TRUTH.md` e não o contradiz.
+
+---
+
+## Visão geral
+
+* Docker é tratado como **camada descartável**.
+* Dados persistentes vivem sempre fora do Docker.
+* Todos os serviços são reconstruíveis a partir de `docker-compose.yml` + bind mounts.
+
+---
+
+## Estado atual
+
+* Docker Engine instalado via repositório oficial.
+* Docker Compose (plugin) funcional.
+* Política de restart padrão: `unless-stopped`.
+* `data-root` configurado fora de `/var/lib/docker`.
+
+Data-root ativo:
+
+```
+/srv/docker-data
+```
+
+---
+
+## Estrutura de diretórios
+
+Contrato estrutural:
+
+```
+/srv/docker/
+/srv/docker/services/
+/srv/docker-data/
+```
+
+Regra:
+
+* Cada serviço vive numa subpasta própria em `/srv/docker/services/<nome>`.
+* `docker-compose.yml`, `.env` e dados persistentes vivem juntos.
+
+---
+
+## Regras obrigatórias de persistência
+
+* Nenhum serviço com dados relevantes pode usar volumes anónimos.
+* Todos os dados persistentes usam bind mounts explícitos.
+* Paths devem respeitar o layout definido no ficheiro raiz.
+
+---
+
+## Redes Docker
+
+* Evitar a rede bridge default sempre que possível.
+* Stacks multi-container definem rede própria no compose.
+* Apenas portas estritamente necessárias são expostas.
+
+---
+
+## Gestão de versões
+
+* Serviços críticos usam tags explícitas.
+* Evitar `latest` em serviços de produção.
+* Atualizações feitas de forma controlada, com possibilidade de rollback.
+
+---
+
+## Segurança básica
+
+* Containers como utilizador não-root sempre que possível.
+* Portas expostas minimizadas.
+* Segredos nunca hardcoded em `docker-compose.yml`.
+* Uso de ficheiro `.env` para variáveis sensíveis.
+
+---
+
+## Gestão de logs
+
+### journald (systemd)
+
+Configuração ativa em:
+
+```
+/etc/systemd/journald.conf
+```
+
+Parâmetros:
+
+```
+SystemMaxUse=150M
+SystemKeepFree=500M
+```
+
+Efeito:
+
+* Logs de sistema limitados a ~150 MB.
+* Garantia de espaço livre mínimo no disco.
+
+---
+
+### Docker (logs de containers)
+
+Configuração ativa em:
+
+```
+/etc/docker/daemon.json
+```
+
+```
+{
+  "data-root": "/srv/docker-data",
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "50m",
+    "max-file": "3"
+  }
+}
+```
+
+Efeito:
+
+* Rotação automática de logs.
+* Prevenção de enchimento de disco.
+
+---
+
+## Recuperação total do Docker
+
+Cenário suportado:
+
+* `/var/lib/docker` apagado.
+* Docker reinstalado.
+
+Procedimento esperado:
+
+```
+docker compose up -d
+```
+
+Resultado esperado:
+
+* Todos os serviços reconstruídos.
+* Nenhuma perda de dados persistentes.
+
+---
+
+## Regra operacional
+
+* Qualquer alteração estrutural ao Docker deve ser refletida neste documento.
+* Divergência entre este ficheiro e a realidade torna este ficheiro incorreto.
