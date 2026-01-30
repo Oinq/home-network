@@ -1,0 +1,158 @@
+# Storage ZFS — Dados Críticos (Erebor)
+
+Este documento descreve **exclusivamente** a implementação real do storage ZFS de dados críticos do servidor **erebor**. É documentação derivada do ficheiro raiz `00-EREBOR-SOURCE-OF-TRUTH.md` e não o contradiz.
+
+---
+
+## Visão geral
+
+* Dados críticos residem num pool ZFS dedicado.
+* Objetivo: integridade, tolerância a falhas e recuperação de erro humano.
+* Mountpoint principal: `/mnt/critical`.
+
+---
+
+## Pool ZFS de dados críticos
+
+**Pool ativo**
+
+* Nome: `critical`
+
+* Tipo: mirror
+
+* Discos:
+
+  * WDC WD180EDGZ (18 TB)
+  * WDC WD180EDGZ (18 TB)
+
+* Identificação via: `/dev/disk/by-id`
+
+* Mountpoint: `/mnt/critical`
+
+* Estado: ONLINE, 0 erros (`zpool status` limpo)
+
+---
+
+## Propriedades do pool
+
+Propriedades ativas:
+
+* `ashift=12`
+* `compression=lz4`
+* `atime=off`
+* `autotrim=on`
+* ACLs e xattrs ativos
+
+---
+
+## Datasets existentes
+
+| Dataset            | Mountpoint                | Função        | recordsize |
+| ------------------ | ------------------------- | ------------- | ---------- |
+| critical/photos    | `/mnt/critical/photos`    | Fotos/vídeos  | 1M         |
+| critical/documents | `/mnt/critical/documents` | Documentos    | 128K       |
+| critical/configs   | `/mnt/critical/configs`   | Configurações | 16K        |
+| critical/backups   | `/mnt/critical/backups`   | Backups       | 1M         |
+
+---
+
+## Integridade dos dados migrados
+
+Dados migrados e verificados para ZFS:
+
+* Fotos de família (~963 GB)
+* Verificação realizada via:
+
+```
+rsync --dry-run --delete
+```
+
+Resultado: nenhuma diferença detetada.
+
+Conclusão: dados consistentes.
+
+---
+
+## Estado SMART dos discos
+
+* Nenhum disco apresenta setores realocados.
+* Nenhum setor pendente.
+* Nenhum erro incorrigível reportado.
+
+---
+
+## Política de snapshots ZFS (implementada)
+
+### Objetivo
+
+Proteger dados críticos contra:
+
+* apagamentos acidentais
+* corrupção lógica
+* erro humano
+
+Com retenção previsível e mecanismo auditável.
+
+---
+
+### Implementação técnica
+
+* Mecanismo próprio baseado em script + systemd timers.
+* Não dependente de pacotes externos.
+
+Script de gestão de snapshots:
+
+```
+/usr/local/sbin/zfs-snapshot.sh
+```
+
+Datasets protegidos:
+
+* `critical/photos`
+* `critical/documents`
+* `critical/configs`
+
+Dataset explicitamente excluído:
+
+* `critical/backups`
+
+---
+
+### Política de retenção ativa
+
+| Tipo    | Frequência | Retenção |
+| ------- | ---------- | -------- |
+| hourly  | 1 hora     | 24       |
+| daily   | 1 dia      | 14       |
+| weekly  | 1 semana   | 8        |
+| monthly | 1 mês      | 6        |
+
+---
+
+### Integração com systemd
+
+Timers ativos:
+
+* `zfs-snapshot-hourly.timer`
+* `zfs-snapshot-daily.timer`
+* `zfs-snapshot-weekly.timer`
+* `zfs-snapshot-monthly.timer`
+
+Cada timer executa o script com os parâmetros adequados de retenção.
+
+---
+
+### Validação
+
+* Execução manual confirmada com criação real de snapshots.
+* `systemctl list-timers` confirma timers ativos.
+* `zfs list -t snapshot` mostra snapshots coerentes por dataset.
+
+Conclusão: camada de snapshots funcional, previsível e sob controlo direto.
+
+---
+
+## Regra operacional
+
+* Alterações a datasets, propriedades ou políticas de snapshots devem ser refletidas neste documento.
+* Qualquer divergência entre este ficheiro e a realidade torna este ficheiro incorreto.
