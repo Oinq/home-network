@@ -138,3 +138,14 @@ Se o Home Assistant for destruído e reinstalado, **toda a camada energética de
 * Este ficheiro documenta apenas o papel e o modelo do Home Assistant.
 * Integrações específicas (ex: Victron) são documentadas separadamente.
 * Divergência entre este ficheiro e a realidade torna este ficheiro incorreto.
+
+
+---
+
+
+Integração Victron (visão de alto nível)
+
+A integração do sistema Victron no Home Assistant é realizada exclusivamente via MQTT local, sem qualquer dependência de serviços cloud ou do VRM.
+O Home Assistant consome diretamente os tópicos nativos publicados pelo Cerbo GX através do broker Mosquitto local, conforme definido em detalhe no documento 41-victron-mqtt.md.
+
+O Home Assistant atua apenas como camada de observabilidade, diagnóstico e automação, não sendo fonte primária de dados nem intermediário de controlo energético.
