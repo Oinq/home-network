@@ -1,6 +1,10 @@
 # Erebor Homelab — Single Source of Truth
 
 > **Regra principal:** este ficheiro é a fonte única de verdade. Se não está aqui, oficialmente não existe.
+Este ficheiro é suficiente, por si só, para estabelecer o contexto correto do sistema Erebor. Qualquer análise, planeamento ou alteração deve partir exclusivamente deste documento.
+Documentação derivada apenas detalha implementação e nunca é necessária para contexto inicial,
+sendo no entanto obrigatória antes de executar ou instruir alterações concretas.
+
 
 Este documento define o **estado constitucional** do servidor **erebor**. Substitui documentação antiga e serve como referência única e estável. Documentos derivados podem existir, mas nunca contradizem este ficheiro.
 
