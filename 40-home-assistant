@@ -1,0 +1,140 @@
+# Home Assistant — Modelo Operacional (Erebor)
+
+Este documento descreve o **papel, princípios e implementação operacional** do Home Assistant no ecossistema do servidor **erebor**. É documentação derivada de `00-EREBOR-SOURCE-OF-TRUTH.md` e não o contradiz.
+
+---
+
+## Visão geral
+
+| Item          | Valor                            |
+| ------------- | -------------------------------- |
+| Plataforma    | Home Assistant OS                |
+| IP            | 192.168.1.2                      |
+| Acesso remoto | Tailscale                        |
+| Função        | Controlador central de automação |
+
+---
+
+## Escopo
+
+* Orquestração e observabilidade da casa.
+* Integrações genéricas (monitorização, notificações, dashboards).
+* Integrações críticas locais (energia, sensores, atuadores).
+* Configuração declarativa e versionável via YAML (packages).
+
+---
+
+## Princípio estrutural
+
+O Home Assistant é tratado como **camada de controlo e observabilidade**, não como fonte primária de dados.
+
+Regra fundamental:
+
+> **Sensores base (contadores físicos, inversores, medidores) são a verdade.**
+> O Home Assistant apenas agrega, deriva e apresenta.
+
+Qualquer lógica que possa ser reconstruída **deve ser reconstruível**.
+
+---
+
+## Energia — modelo adotado (fonte de verdade)
+
+A gestão de energia segue um modelo **hierárquico, auditável e reprodutível**.
+
+### 1) Sensores base
+
+* Representam valores reais e cumulativos (kWh).
+* Tipicamente com `state_class: total_increasing`.
+* Correspondem a contadores físicos ou fontes lógicas primárias.
+
+---
+
+### 2) Sensores de conveniência (template)
+
+Usados apenas para:
+
+* somas (ex: tarifário 1 + 2)
+* conversões (ex: m³ → kWh)
+* normalização de nomes
+
+Características:
+
+* Não criam histórico próprio relevante.
+* Podem ser recriados a qualquer momento.
+
+---
+
+### 3) Utility meters
+
+Único mecanismo autorizado para:
+
+* roll-ups diários, mensais e anuais
+* dashboards históricos
+* estatísticas de consumo e produção
+
+---
+
+## Consolidação de utility meters
+
+Decisão arquitetural:
+
+> **Todos os utility meters são definidos exclusivamente em YAML via packages.**
+
+Implicações:
+
+* Utility meters criados pela UI foram removidos.
+* Histórico manteve-se intacto (baseado em estatísticas).
+* A UI deixa de ser fonte de verdade para energia.
+
+Benefícios:
+
+* Configuração versionável em Git.
+* Reprodutibilidade total em caso de rebuild.
+* Eliminação de duplicações e nomes ambíguos.
+
+---
+
+## Organização prática dos domínios energéticos
+
+Utility meters organizados por domínio funcional:
+
+* Rede elétrica (importação / exportação)
+* Produção fotovoltaica
+* Baterias (carga / descarga / energia acumulada)
+* Consumos dedicados (EV charger, boiler, cargas AC)
+* Gás (m³ e conversão para kWh)
+
+Regras comuns:
+
+* Sensor base cumulativo.
+* Zero lógica na UI.
+* Roll-ups apenas via `utility_meter`.
+
+---
+
+## Regra operacional
+
+* Nunca criar utility meters pela UI.
+* Nunca apagar sensores base com histórico sem auditoria prévia.
+* Qualquer alteração energética deve ser refletida:
+
+  * no package YAML correspondente
+  * e neste documento
+
+Se o Home Assistant for destruído e reinstalado, **toda a camada energética deve ser reconstruível apenas com YAML + histórico do recorder**.
+
+---
+
+## Integrações genéricas
+
+* Monitoring via Glances.
+* Dashboards e notificações locais.
+* Estrutura base não dependente de serviços externos.
+
+---
+
+## Regra documental
+
+* Este ficheiro documenta apenas o papel e o modelo do Home Assistant.
+* Integrações específicas (ex: Victron) são documentadas separadamente.
+* Divergência entre este ficheiro e a realidade torna este ficheiro incorreto.
