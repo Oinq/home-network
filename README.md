@@ -235,91 +235,135 @@ Configurado em `/etc/docker/daemon.json`:
 
 ---
 
-6) Serviços atualmente ativos
-Minecraft
-Item	Valor
-Stack	/srv/docker/services/minecraft
-Dados	/srv/docker/services/minecraft/data
-Container	itzg/minecraft-server
-Gestão	docker compose up -d
-Autenticação	Modo offline (ONLINE_MODE=FALSE)
-Validação	Mundo real recuperado do oinqserver e confirmado in-game
-Estado	Serviço funcional e validado
-SABnzbd
+## 6) Serviços atualmente ativos
 
-(ativo, stack operacional em /srv/docker/services/sabnzbd)
+### Minecraft
 
-Radarr
-Item	Valor
-Stack	/srv/docker/services/media/radarr
-Config	/srv/docker/services/media/radarr/config
-Container	lscr.io/linuxserver/radarr
-Porta	7878 (LAN)
-Root	/mnt/media/movies
-Integração	SABnzbd + Prowlarr + Jellyseerr
-Validação	Import automático confirmado
-Estado	Serviço funcional e validado
-Sonarr
-Item	Valor
-Stack	/srv/docker/services/media/sonarr
-Config	/srv/docker/services/media/sonarr/config
-Container	lscr.io/linuxserver/sonarr
-Porta	8989 (LAN)
-Root	/mnt/media/tv
-Integração	SABnzbd + Prowlarr + Jellyseerr
-Validação	Import automático confirmado
-Estado	Serviço funcional e validado
-Prowlarr
-Item	Valor
-Stack	/srv/docker/services/prowlarr
-Config	/srv/docker/services/prowlarr/config
-Container	lscr.io/linuxserver/prowlarr
-Porta	9696 (LAN)
-Integração	Ligado ao SABnzbd, Radarr e Sonarr
-Estado	Serviço funcional e integrado
-Bazarr
-Item	Valor
-Stack	/srv/docker/services/media/bazarr
-Config	/srv/docker/services/media/bazarr/config
-Container	lscr.io/linuxserver/bazarr
-Integração	Radarr + Sonarr
-Política	Legendas PT preferidas + fallback EN
-Tradução	Automática via Google Translate
-Validação	Legendas PT externas confirmadas
-Estado	Serviço funcional e validado
-Jellyfin
-Item	Valor
-Stack	/srv/docker/services/jellyfin
-Config	/srv/docker/services/jellyfin/config
-Porta	8096 (LAN)
-Media	/mnt/media/movies, /mnt/media/tv
-Escrita	Não (read-only sobre media)
-Validação	Playback e legendas PT confirmadas
-Estado	Serviço funcional e validado
-Jellyseerr
-Item	Valor
-Stack	/srv/docker/services/jellyseerr
-Config	/srv/docker/services/jellyseerr/config
-Porta	5055 (LAN)
-Integração	Jellyfin + Radarr + Sonarr
-Auth	Local (sem Plex)
-Função	Interface de pedidos de media
-Estado	Serviço funcional e validado
-Monitoring
+| Item           | Valor                                           |
+| -------------- | ----------------------------------------------- |
+| Stack          | /srv/docker/services/minecraft                  |
+| Dados          | /srv/docker/services/minecraft/data             |
+| Container      | itzg/minecraft-server                           |
+| Gestão         | docker compose up -d                            |
+| Autenticação   | Modo offline (ONLINE_MODE=FALSE)                |
+| Validação      | Mundo recuperado do oinqserver, confirmado      |
+| Estado         | Serviço funcional e validado                    |
 
-Glances como serviço systemd
+---
 
-Integração ativa no Home Assistant
+### SABnzbd
 
-Métricas visíveis: CPU, RAM, disco, temperaturas, rede, uptime
+| Item       | Valor                               |
+| ---------- | ----------------------------------- |
+| Stack      | /srv/docker/services/sabnzbd         |
+| Função     | Download manager (Usenet)            |
+| Integração | Radarr, Sonarr, Prowlarr             |
+| Estado     | Serviço funcional e validado         |
 
-Tailscale
+---
 
-Erebor como node ativo
+### Radarr
 
-Subnet routing: 192.168.1.0/24
+| Item        | Valor                                    |
+| ----------- | ---------------------------------------- |
+| Stack       | /srv/docker/services/media/radarr         |
+| Config      | /srv/docker/services/media/radarr/config |
+| Container   | lscr.io/linuxserver/radarr                |
+| Porta       | 7878 (LAN)                               |
+| Root folder | /mnt/media/movies                        |
+| Integração  | SABnzbd + Prowlarr + Jellyseerr           |
+| Validação   | Import automático confirmado              |
+| Estado      | Serviço funcional e validado              |
 
-Conectividade externa validada
+---
+
+### Sonarr
+
+| Item        | Valor                                    |
+| ----------- | ---------------------------------------- |
+| Stack       | /srv/docker/services/media/sonarr         |
+| Config      | /srv/docker/services/media/sonarr/config |
+| Container   | lscr.io/linuxserver/sonarr                |
+| Porta       | 8989 (LAN)                               |
+| Root folder | /mnt/media/tv                            |
+| Integração  | SABnzbd + Prowlarr + Jellyseerr           |
+| Validação   | Import automático confirmado              |
+| Estado      | Serviço funcional e validado              |
+
+---
+
+### Prowlarr
+
+| Item       | Valor                               |
+| ---------- | ----------------------------------- |
+| Stack      | /srv/docker/services/prowlarr        |
+| Config     | /srv/docker/services/prowlarr/config |
+| Container  | lscr.io/linuxserver/prowlarr         |
+| Porta      | 9696 (LAN)                          |
+| Integração | SABnzbd, Radarr, Sonarr              |
+| Estado     | Serviço funcional e integrado        |
+
+---
+
+### Bazarr
+
+| Item       | Valor                                   |
+| ---------- | --------------------------------------- |
+| Stack      | /srv/docker/services/media/bazarr        |
+| Config     | /srv/docker/services/media/bazarr/config |
+| Container  | lscr.io/linuxserver/bazarr               |
+| Integração | Radarr + Sonarr                          |
+| Política   | PT preferido, fallback EN                |
+| Tradução   | Automática (Google Translate)            |
+| Validação  | Legendas PT externas confirmadas         |
+| Estado     | Serviço funcional e validado             |
+
+---
+
+### Jellyfin
+
+| Item      | Valor                                              |
+| --------- | -------------------------------------------------- |
+| Stack     | /srv/docker/services/jellyfin                      |
+| Config    | /srv/docker/services/jellyfin/config               |
+| Porta     | 8096 (LAN)                                        |
+| Media     | /mnt/media/movies, /mnt/media/tv                  |
+| Escrita  | Não (read-only sobre media)                        |
+| Validação| Playback e legendas PT confirmadas                 |
+| Estado   | Serviço funcional e validado                       |
+
+---
+
+### Jellyseerr
+
+| Item       | Valor                                  |
+| ---------- | -------------------------------------- |
+| Stack      | /srv/docker/services/jellyseerr        |
+| Config     | /srv/docker/services/jellyseerr/config |
+| Porta      | 5055 (LAN)                            |
+| Integração | Jellyfin + Radarr + Sonarr             |
+| Auth       | Local (sem Plex)                       |
+| Função     | Interface de pedidos de media          |
+| Estado     | Serviço funcional e validado           |
+
+---
+
+### Monitoring
+
+**Glances**
+
+* Serviço systemd ativo
+* Integração no Home Assistant
+* Métricas: CPU, RAM, disco, temperaturas, rede, uptime
+
+---
+
+### Tailscale
+
+* Erebor como node ativo
+* Subnet routing: 192.168.1.0/24
+* Conectividade externa validada
+
 
 7) Estrutura implementada (media stack e Immich)
 Media stack (dados não críticos, fora de ZFS)
