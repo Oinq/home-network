@@ -1,0 +1,105 @@
+# Backups — Estratégia Operacional (Erebor)
+
+Este documento descreve a **estratégia real e operacional de backups** do servidor **erebor**. É documentação derivada de `00-EREBOR-SOURCE-OF-TRUTH.md` e não o contradiz.
+
+---
+
+## Visão geral
+
+* Backups existem para proteção contra erro humano, falha lógica e perda total.
+* Redundância (ex: ZFS mirror) **não é backup**.
+* Backups são tratados como infraestrutura crítica.
+
+---
+
+## Ativo mais crítico
+
+* Fotos e vídeos de família.
+
+Estado atual das cópias existentes:
+
+* NAS (fonte principal)
+* oinqserver (segunda cópia histórica)
+* Erebor (disco interno de 1 TB)
+* Disco externo 2 TB (cópia offline em criação)
+
+---
+
+## Objetivo desta fase
+
+* Permitir reestruturação de discos sem risco.
+* Garantir pelo menos **duas cópias offline e fisicamente separadas**.
+
+Estado considerado seguro:
+
+* 1 cópia online ativa
+* 2 cópias offline guardadas
+
+Enquanto esta condição não estiver garantida, **não são feitas operações destrutivas em nenhum disco**.
+
+---
+
+## Política de backup permanente (pós-reestruturação)
+
+### Dados considerados críticos
+
+* `/mnt/critical/**`
+* Configurações importantes (Home Assistant, containers críticos, configs manuais)
+
+---
+
+### Regras estruturais
+
+* 1 cópia primária no Erebor
+* 1 cópia secundária automática noutro sistema
+* 1 cópia offline periódica
+
+---
+
+## Mecanismo técnico previsto (a implementar)
+
+Estado atual:
+
+> Política definida. Mecanismo permanente ainda não implementado.
+
+Componentes previstos:
+
+* Ferramenta: `rsync` ou `restic`
+* Origem: `/mnt/critical`
+* Destino: NAS ou disco dedicado
+* Frequência: diária ou semanal
+* Logs verificáveis
+
+---
+
+## Backup offline
+
+* Discos USB dedicados exclusivamente a backup.
+* Ligados apenas durante a execução da cópia.
+* Guardados fisicamente separados do sistema principal.
+
+---
+
+## Regra operacional de segurança
+
+Nunca:
+
+* Reestruturar storage
+* Destruir pools
+* Reutilizar discos
+* Formatar volumes
+
+Sem antes confirmar:
+
+* Existem múltiplas cópias válidas
+* Pelo menos uma cópia é offline
+
+Se existir qualquer dúvida, assume-se que **não está seguro**.
+
+---
+
+## Regra documental
+
+* Este ficheiro documenta a política e o estado dos backups.
+* Implementações técnicas devem respeitar esta política.
+* Divergência entre este ficheiro e a realidade torna este ficheiro incorreto.
