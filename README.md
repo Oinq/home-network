@@ -82,6 +82,7 @@ Os seguintes paths são **contratos estáveis**. O backend físico pode mudar se
 | SABnzbd           | Ativo  | `21-docker-media-stack.md` |
 | Monitoring        | Ativo  | `40-home-assistant.md`     |
 | Tailscale         | Ativo  | `20-docker.md`             |
+| MeTube            | Ativo  | `22-metube.md`             |
 
 ---
 
@@ -124,7 +125,33 @@ Regra de segurança:
 
 ---
 
-## 9) Home Assistant — papel no sistema
+## 9) MeTube — Downloads manuais (YouTube/Audio)
+
+* Dados críticos incluem, no mínimo, `/mnt/critical/**`.
+* Existem sempre múltiplas cópias válidas.
+* Pelo menos uma cópia é offline.
+
+MeTube está ativo como UI web para yt-dlp.
+Usa staging em scratch, separado do SABnzbd.
+Containers são descartáveis; downloads são tratados fora do Docker.
+
+Paths contratuais:
+/srv/docker/services/metube/      → stack + config persistente
+/srv/data/scratch/metube/         → staging temporário de downloads
+/mnt/raid/media/music             → destino final (música)
+/mnt/raid/media/books             → destino final (audiobooks)
+/mnt/raid/media/homevideo         → destino final (vídeo)
+
+
+Arrumação automática:
+Um sorter local move ficheiros completos do scratch para as bibliotecas finais.
+Longform audio (>100MB) é classificado como “books”.
+Ficheiros em escrita são ignorados (janela de estabilidade 60s).
+Implementação detalhada: 22-metube.md
+
+---
+
+## 10) Home Assistant — papel no sistema
 
 * O Home Assistant é camada de controlo e observabilidade.
 * Não é fonte primária de dados.
@@ -137,7 +164,7 @@ Regra de segurança:
 
 ---
 
-## 10) Regra estrutural de documentação
+## 11) Regra estrutural de documentação
 
 * Este ficheiro é a fonte única de verdade.
 * Documentação derivada explica, mas não redefine.
